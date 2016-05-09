@@ -39,7 +39,7 @@ Biblioteca de filtros destinada a simplificar o monitoramento de uma aplicação
 Localize e instale o pacote *WebApiFilters4Log* através do NuGet Package Manager ou utilize o comando **Install-Package WebApiFilters4Log** no Package Manager Console.
 
 ### Utilização:
-Após a instalação do *WebApiFilters4Log* via NuGet não é necessário realizar nenhum tipo de configuração. ** *Automagicamente* ** o arquivo de configuração e o arquivo *Startup.cs* são alterados para que o *WebApiFilters4Log* funcione corretamente.
+Após a instalação do *WebApiFilters4Log* via NuGet não é necessário realizar nenhum tipo de configuração. **Automagicamente** o arquivo de configuração e o arquivo *Startup.cs* são alterados para que o *WebApiFilters4Log* funcione corretamente.
 
 #### Alterações realizadas no arquivo de configuração *Web.config*:
 As alterações realizadas no arquivo de configuração são pertinentes ao log4net no qual são criados dois *Loggers*. O primeiro, nomeado como *Logger*, é responsável por registrar todos *logs*. O segundo, nomeado como *ExceptionLogger* é responsável por registrar os detalhes das exceções capturadas.
