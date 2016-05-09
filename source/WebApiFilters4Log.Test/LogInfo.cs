@@ -28,11 +28,20 @@
 
 			rest = rest.Remove(0, rest.IndexOf("- ") + 2);
 
-			var dic = rest.Substring(0, rest.IndexOf("} -") + 1);
+			if (rest.Contains("} -"))
+			{
+				var dic = rest.Substring(0, rest.IndexOf("} -") + 1);
 
-			Context = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dic);
+				Context = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dic);
 
-			Message = rest.Remove(0, rest.IndexOf("} -") + 4);
+				rest = rest.Remove(0, rest.IndexOf("} -") + 4);
+			}
+			else
+			{
+				Context = new Dictionary<string, string>();
+			}
+
+			Message = rest;
 		}
 	}
 }

@@ -101,6 +101,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\WebApiFilters4Log.Lib\WebApiFilters4Log.Lib.csproj">
+      <Project>{9A08C1CC-1172-4075-9AED-CEA1DBEB37AC}</Project>
+      <Name>WebApiFilters4Log.Lib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WebApiFilters4Log.WebApiTest\WebApiFilters4Log.WebApiTest.csproj">
       <Project>{69c4c38c-63f6-4c9e-9db6-fc81bc4afadc}</Project>
       <Name>WebApiFilters4Log.WebApiTest</Name>

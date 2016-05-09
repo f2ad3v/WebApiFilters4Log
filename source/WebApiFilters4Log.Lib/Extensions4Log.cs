@@ -183,9 +183,11 @@
 		{
 			var msg = message;
 
-			if (!string.IsNullOrWhiteSpace(message)) msg = string.Format("{0} - {1}", context.ToJson(), message);
+			if (args != null && args.Count() > 0) msg = string.Format(message, args);
 
-			logger.LogMessage(logLevel, msg, args);
+			if (context != null && context.Count > 0) msg = string.Format("{0} - {1}", context.ToJson(), msg);
+
+			logger.LogMessage(logLevel, msg);
 		}
 
 		/// <summary>
