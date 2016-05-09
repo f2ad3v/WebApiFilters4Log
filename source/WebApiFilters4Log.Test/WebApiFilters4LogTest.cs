@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using log4net;
 
 namespace WebApiFilters4Log.Test
 {
@@ -26,6 +27,8 @@ namespace WebApiFilters4Log.Test
 			var args4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Args4Log");
 			var exception4LogFileName = string.Format(LOG_FILE_NAME, "Exceptions4Log");
 			var exception4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Exceptions4Log");
+			var extension4LogFileName = string.Format(LOG_FILE_NAME, "Extension4Log");
+			var extension4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Extension4Log");
 
 			if (File.Exists(action4LogFileName)) File.Delete(action4LogFileName);
 			if (File.Exists(action4LogFileNameTmp)) File.Delete(action4LogFileNameTmp);
@@ -33,6 +36,8 @@ namespace WebApiFilters4Log.Test
 			if (File.Exists(args4LogFileNameTmp)) File.Delete(args4LogFileNameTmp);
 			if (File.Exists(exception4LogFileName)) File.Delete(exception4LogFileName);
 			if (File.Exists(exception4LogFileNameTmp)) File.Delete(exception4LogFileNameTmp);
+			if (File.Exists(extension4LogFileName)) File.Delete(extension4LogFileName);
+			if (File.Exists(extension4LogFileNameTmp)) File.Delete(extension4LogFileNameTmp);
 
 			using (var server = TestServer.Create<OwinTestConf>())
 			using (var client = new HttpClient(server.Handler))
@@ -113,11 +118,115 @@ namespace WebApiFilters4Log.Test
 				TestDetailedExceptionInfo(result, "LogDetailedExceptionWithDebugKey", true);
 			}
 
+			TestExtension4Log(extension4LogFileName, extension4LogFileNameTmp);
+
 			TestAction4Log(action4LogFileName, action4LogFileNameTmp);
 
 			TestArguments4Log(args4LogFileName, args4LogFileNameTmp);
 
 			TestException4Log(exception4LogFileName, exception4LogFileNameTmp);
+		}
+
+		private void TestExtension4Log(string extension4LogFileName, string extension4LogFileNameTmp)
+		{
+			ILog logger = LogManager.GetLogger("Extension4Log");
+
+			Assert.IsTrue(logger.IsEnabled(LogLevel.DEBUG));
+			Assert.IsTrue(logger.IsEnabled(LogLevel.INFO));
+			Assert.IsTrue(logger.IsEnabled(LogLevel.WARN));
+			Assert.IsTrue(logger.IsEnabled(LogLevel.ERROR));
+			Assert.IsTrue(logger.IsEnabled(LogLevel.FATAL));
+
+			logger.LogMessage(LogLevel.DEBUG, "Test DEBUG");
+			logger.LogMessage(LogLevel.DEBUG, "{0} {1}", "Test DEBUG", "[format]");
+
+			logger.LogMessage(LogLevel.INFO, "Test INFO");
+			logger.LogMessage(LogLevel.INFO, "{0} {1}", "Test INFO", "[format]");
+
+			logger.LogMessage(LogLevel.WARN, "Test WARN");
+			logger.LogMessage(LogLevel.WARN, "{0} {1}", "Test WARN", "[format]");
+
+			logger.LogMessage(LogLevel.ERROR, "Test ERROR");
+			logger.LogMessage(LogLevel.ERROR, "{0} {1}", "Test ERROR", "[format]");
+
+			logger.LogMessage(LogLevel.FATAL, "Test FATAL");
+			logger.LogMessage(LogLevel.FATAL, "{0} {1}", "Test FATAL", "[format]");
+
+			Dictionary<string, string> dic = new Dictionary<string, string> { { "test", "ok" } };
+			logger.LogMessage(LogLevel.DEBUG, dic, "Test DEBUG");
+			logger.LogMessage(LogLevel.DEBUG, dic, "{0} {1}", "Test DEBUG", "[format]");
+
+			Assert.IsTrue(File.Exists(extension4LogFileName));
+
+			File.Copy(extension4LogFileName, extension4LogFileNameTmp);
+
+			var lines = File.ReadAllLines(extension4LogFileNameTmp);
+
+			Assert.AreEqual(12, lines.Length);
+
+			var log = new LogInfo(lines[0]);
+
+			Assert.AreEqual(LogLevel.DEBUG.ToString(), log.LogLevel);
+			Assert.AreEqual("Test DEBUG", log.Message);
+
+			log = new LogInfo(lines[1]);
+
+			Assert.AreEqual(LogLevel.DEBUG.ToString(), log.LogLevel);
+			Assert.AreEqual("Test DEBUG [format]", log.Message);
+
+			log = new LogInfo(lines[2]);
+
+			Assert.AreEqual(LogLevel.INFO.ToString(), log.LogLevel);
+			Assert.AreEqual("Test INFO", log.Message);
+
+			log = new LogInfo(lines[3]);
+
+			Assert.AreEqual(LogLevel.INFO.ToString(), log.LogLevel);
+			Assert.AreEqual("Test INFO [format]", log.Message);
+
+			log = new LogInfo(lines[4]);
+
+			Assert.AreEqual(LogLevel.WARN.ToString(), log.LogLevel);
+			Assert.AreEqual("Test WARN", log.Message);
+
+			log = new LogInfo(lines[5]);
+
+			Assert.AreEqual(LogLevel.WARN.ToString(), log.LogLevel);
+			Assert.AreEqual("Test WARN [format]", log.Message);
+
+			log = new LogInfo(lines[6]);
+
+			Assert.AreEqual(LogLevel.ERROR.ToString(), log.LogLevel);
+			Assert.AreEqual("Test ERROR", log.Message);
+
+			log = new LogInfo(lines[7]);
+
+			Assert.AreEqual(LogLevel.ERROR.ToString(), log.LogLevel);
+			Assert.AreEqual("Test ERROR [format]", log.Message);
+
+			log = new LogInfo(lines[8]);
+
+			Assert.AreEqual(LogLevel.FATAL.ToString(), log.LogLevel);
+			Assert.AreEqual("Test FATAL", log.Message);
+
+			log = new LogInfo(lines[9]);
+
+			Assert.AreEqual(LogLevel.FATAL.ToString(), log.LogLevel);
+			Assert.AreEqual("Test FATAL [format]", log.Message);
+
+			log = new LogInfo(lines[10]);
+
+			Assert.AreEqual(LogLevel.DEBUG.ToString(), log.LogLevel);
+			Assert.AreEqual("Test DEBUG", log.Message);
+			Assert.IsTrue(log.Context.ContainsKey("test"));
+			Assert.AreEqual("ok", log.Context["test"]);
+
+			log = new LogInfo(lines[11]);
+
+			Assert.AreEqual(LogLevel.DEBUG.ToString(), log.LogLevel);
+			Assert.AreEqual("Test DEBUG [format]", log.Message);
+			Assert.IsTrue(log.Context.ContainsKey("test"));
+			Assert.AreEqual("ok", log.Context["test"]);
 		}
 
 		#region TestException4Log
