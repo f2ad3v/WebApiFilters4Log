@@ -18,11 +18,12 @@
 		/// Construtor que recebe um objeto que sera retornado como json
 		/// </summary>
 		/// <param name="value">Instancia de um objeto</param>
-		public JsonContent(object value)
+		/// <param name="formatting">Formato do json</param>
+		public JsonContent(object value, Formatting formatting = Formatting.Indented)
 		{
 			if (value == null) throw new ArgumentNullException("value");
 
-			var jw = new JsonTextWriter(new StreamWriter(_stream)) { Formatting = Formatting.Indented };
+			var jw = new JsonTextWriter(new StreamWriter(_stream)) { Formatting = formatting };
 
 			var serializer = new JsonSerializer();
 
@@ -57,15 +58,7 @@
 		/// <returns></returns>
 		protected override bool TryComputeLength(out long length)
 		{
-			try
-			{
-				length = _stream.Length;
-			}
-			catch
-			{
-				length = 0;
-				return false;
-			}
+			length = _stream.Length;
 
 			return true;
 		}

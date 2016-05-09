@@ -21,33 +21,6 @@
 		}
 
 		/// <summary>
-		/// Construtor para uma nova instância de CommonException
-		/// </summary>
-		/// <param name="message">Mensagem da exceção</param>
-		/// <param name="id">Identificador da exceção</param>
-		public CommonException(string message, Guid id)
-			: this(message, id, null)
-		{
-		}
-
-		/// <summary>
-		/// Construtor para uma nova instância de CommonException
-		/// </summary>
-		/// <param name="message">Mensagem da exceção</param>
-		public CommonException(string message)
-			: this(message, Guid.NewGuid())
-		{
-		}
-
-		/// <summary>
-		/// Construtor para uma nova instância de CommonException
-		/// </summary>
-		public CommonException()
-			: this(string.Empty)
-		{
-		}
-
-		/// <summary>
 		/// Identificador global da exceção
 		/// </summary>
 		public readonly Guid Id;
