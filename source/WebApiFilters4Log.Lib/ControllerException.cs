@@ -8,6 +8,7 @@
 	/// <summary>
 	/// Responsavel por capturar informacoes do HttpActionContext
 	/// </summary>
+	[Serializable]
 	public class ControllerException : CommonException
 	{
 		private const string MSG_ERROR = "Ocorreu um erro inesperado executando ";

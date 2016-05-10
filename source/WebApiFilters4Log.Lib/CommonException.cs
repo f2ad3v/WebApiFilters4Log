@@ -5,6 +5,7 @@
 	/// <summary>
 	/// Excecao padrao
 	/// </summary>
+	[Serializable]
 	public class CommonException : Exception
 	{
 		/// <summary>
