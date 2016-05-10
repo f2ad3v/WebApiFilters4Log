@@ -11,43 +11,43 @@
 	[Serializable]
 	public class ControllerException : CommonException
 	{
-		private const string MSG_ERROR = "Ocorreu um erro inesperado executando ";
+		const string MSG_ERROR_FORMAT = "Ocorreu um erro inesperado executando {0}.{1}!";
 		const string CONTEXT_ID = "ContextId";
 
 		/// <summary>
 		/// Id do contexto da requisicao
 		/// </summary>
-		public Guid ContextId { get; set; }
+		public Guid ContextId { get; private set; }
 
 		/// <summary>
 		/// Nome da maquina que gerou a excecao
 		/// </summary>
-		public string MachineName { get; set; }
+		public string MachineName { get; private set; }
 
 		/// <summary>
 		/// Nome do controller que gerou a excecao
 		/// </summary>
-		public string Controller { get; set; }
+		public string Controller { get; private set; }
 
 		/// <summary>
 		/// Nome da action que gerou a excecao
 		/// </summary>
-		public string Action { get; set; }
+		public string Action { get; private set; }
 
 		/// <summary>
 		/// URL e parametros da requisicao
 		/// </summary>
-		public string PathAndQuery { get; set; }
+		public string PathAndQuery { get; private set; }
 
 		/// <summary>
 		/// Usuario que realizou a requisicao
 		/// </summary>
-		public string User { get; set; }
+		public string User { get; private set; }
 
 		/// <summary>
 		/// Argumentos passados na requisicao
 		/// </summary>
-		public Dictionary<string, string> Arguments { get; set; }
+		public Dictionary<string, string> Arguments { get; private set; }
 
 		/// <summary>
 		/// Construtor utilizado para capturar informacoes relevantes do HttpActionContext
@@ -83,7 +83,7 @@
 
 		private static string GetMessageError(HttpActionDescriptor actionDescriptor)
 		{
-			return string.Format("{0}{1}.{2}!", MSG_ERROR, actionDescriptor.ControllerDescriptor.ControllerName, actionDescriptor.ActionName);
+			return string.Format(MSG_ERROR_FORMAT, actionDescriptor.ControllerDescriptor.ControllerName, actionDescriptor.ActionName);
 		}
 	}
 }

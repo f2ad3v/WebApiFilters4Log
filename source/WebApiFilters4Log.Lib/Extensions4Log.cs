@@ -199,6 +199,7 @@
 		{
 			var addInfo = new Dictionary<string, string>
 			{
+				{ "MachineName", ce.MachineName },
 				{ "Controller", ce.Controller },
 				{ "Action", ce.Action },
 				{ "PathAndQuery", ce.PathAndQuery },
