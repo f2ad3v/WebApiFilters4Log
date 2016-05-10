@@ -17,6 +17,7 @@ namespace WebApiFilters4Log.Test
 		private const string LOG_FILE_NAME_TMP = ".\\log\\{0}Tmp.log";
 		private static string jsonModelClient = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient()).Replace("\"", "'");
 
+		#region TestFilters
 
 		[TestMethod]
 		public async Task TestFilters()
@@ -127,6 +128,10 @@ namespace WebApiFilters4Log.Test
 			TestException4Log(exception4LogFileName, exception4LogFileNameTmp);
 		}
 
+		#endregion TestFilters
+
+		#region TestExtension4Log
+
 		private void TestExtension4Log(string extension4LogFileName, string extension4LogFileNameTmp)
 		{
 			ILog logger = LogManager.GetLogger("Extension4Log");
@@ -228,6 +233,8 @@ namespace WebApiFilters4Log.Test
 			Assert.IsTrue(log.Context.ContainsKey("test"));
 			Assert.AreEqual("ok", log.Context["test"]);
 		}
+
+		#endregion TestExtension4Log
 
 		#region TestException4Log
 
