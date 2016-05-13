@@ -161,13 +161,17 @@ namespace WebApiFilters4Log.Test
 			logger.LogMessage(LogLevel.DEBUG, dic, "Test DEBUG");
 			logger.LogMessage(LogLevel.DEBUG, dic, "{0} {1}", "Test DEBUG", "[format]");
 
+			var exception = new CommonException("Test LogMessage with exception", Guid.NewGuid(), new InvalidOperationException("Test"));
+
+			logger.LogMessage(exception);
+
 			Assert.IsTrue(File.Exists(extension4LogFileName));
 
 			File.Copy(extension4LogFileName, extension4LogFileNameTmp);
 
 			var lines = File.ReadAllLines(extension4LogFileNameTmp);
 
-			Assert.AreEqual(12, lines.Length);
+			Assert.AreEqual(13, lines.Length);
 
 			var log = new LogInfo(lines[0]);
 
@@ -232,6 +236,15 @@ namespace WebApiFilters4Log.Test
 			Assert.AreEqual("Test DEBUG [format]", log.Message);
 			Assert.IsTrue(log.Context.ContainsKey("test"));
 			Assert.AreEqual("ok", log.Context["test"]);
+
+			var exInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<ExceptionInfo>(lines[12].Remove(0, 36));
+
+			Assert.AreEqual("Test LogMessage with exception", exInfo.Message);
+			Assert.AreEqual("WebApiFilters4Log.CommonException", exInfo.ExceptionType);
+			Assert.IsNull(exInfo.Source);
+			Assert.IsNotNull(exInfo.InnerException);
+			Assert.AreEqual("Test", exInfo.InnerException.Message);
+			Assert.AreEqual("System.InvalidOperationException", exInfo.InnerException.ExceptionType);
 		}
 
 		#endregion TestExtension4Log

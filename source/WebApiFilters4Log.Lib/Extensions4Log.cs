@@ -191,6 +191,23 @@
 		}
 
 		/// <summary>
+		/// Extensao para logar uma excecao em formato json
+		/// </summary>
+		/// <param name="logger">log4net.ILog</param>
+		/// <param name="exception">Instancia de System.Exception</param>
+		public static void LogMessage(this log4net.ILog logger, Exception exception)
+		{
+			var errorId = Guid.NewGuid();
+			if (exception is CommonException) errorId = (exception as CommonException).Id;
+
+			var exceptionObj = exception.ToDynamicObject(errorId);
+
+			var jsonException = Newtonsoft.Json.JsonConvert.SerializeObject(exceptionObj);
+
+			logger.LogMessage(LogLevel.ERROR, jsonException);
+		}
+
+		/// <summary>
 		/// Extensao para obter um dicionario contendo detalhes da excecao
 		/// </summary>
 		/// <param name="ce">ControllerException</param>
@@ -261,6 +278,8 @@
 
 		private static string ProcessStackTrace(string stackTrace)
 		{
+			if (string.IsNullOrWhiteSpace(stackTrace)) return string.Empty;
+
 			if (!stackTrace.Contains("lambda_method(Closure")) return stackTrace;
 
 			var firstPart = stackTrace.Substring(0, stackTrace.IndexOf("lambda_method(Closure"));
