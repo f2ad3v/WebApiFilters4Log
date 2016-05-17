@@ -29,6 +29,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		}
 
 		[HttpPut]
+		[Action4LogFilter("ExceptionLogger", LogLevel.DEBUG)]
 		[Exception4LogFilter("ExceptionLogger", "0d059126-2ccb-40db-b65b-c020dd5b0810")]
 		public IHttpActionResult LogDetailedExceptionWithDebugKey([FromUri] Guid id, [FromBody] Models.ClientModel client)
 		{
