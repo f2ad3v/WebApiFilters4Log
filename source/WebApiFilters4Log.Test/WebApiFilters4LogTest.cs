@@ -43,6 +43,7 @@ namespace WebApiFilters4Log.Test
 			using (var server = TestServer.Create<OwinTestConf>())
 			using (var client = new HttpClient(server.Handler))
 			{
+				// Testes para Action4LogFilter
 				var response = await client.GetAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_Success");
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -55,6 +56,15 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 
+				response = await client.GetAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_WarnTimeout");
+
+				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+				result = await response.Content.ReadAsAsync<string>();
+
+				Assert.AreEqual("Success", result);
+
+				// Testes para Arguments4LogFilter
 				response = await client.GetAsync("http://testserver/api/Arguments4Log/LogPrimitiveTypes?id=6&value=2.34&text=testing");
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -69,6 +79,7 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
+				// Testes para Exception4LogFilter
 				response = await client.GetAsync("http://testserver/api/Exception4Log/LogSimpleException");
 
 				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
@@ -327,10 +338,62 @@ namespace WebApiFilters4Log.Test
 
 			var lines = File.ReadAllLines(action4LogFileNameTmp);
 
-			Assert.AreEqual(4, lines.Length);
+			Assert.AreEqual(6, lines.Length);
 
 			TestActionLogHttpGetSuccess(lines[0], lines[1]);
 			TestActionLogHttpGetFail(lines[2], lines[3]);
+			TestActionLogHttpGetWarnTimeout(lines[4], lines[5]);
+
+		}
+
+		private void TestActionLogHttpGetWarnTimeout(string strLogStart, string strLogEnd)
+		{
+			var logStart = new LogInfo(strLogStart);
+
+			Assert.IsTrue(logStart.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("Starting Action", logStart.Message);
+			Assert.AreEqual("DEBUG", logStart.LogLevel);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
+
+			Guid contextId;
+			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.IsTrue(logStart.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logStart.Context["MachineName"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Action4Log", logStart.Context["Controller"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogInfoWithHttpGet_WarnTimeout", logStart.Context["Action"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
+			Assert.AreEqual("GET", logStart.Context["Method"]);
+
+			var logEnd = new LogInfo(strLogEnd);
+
+			Assert.AreEqual("End Action", logEnd.Message);
+			Assert.AreEqual("WARN", logEnd.LogLevel);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
+
+			Guid contextIdEnd;
+			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.AreEqual(contextId, contextIdEnd);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("Time"));
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("WarnTimeout"));
+			Assert.AreEqual("true", logEnd.Context["WarnTimeout"]);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("StatusCode"));
+			Assert.AreEqual("OK(200)", logEnd.Context["StatusCode"]);
 		}
 
 		private static void TestActionLogHttpGetSuccess(string strLogStart, string strLogEnd)
