@@ -17,13 +17,15 @@
 		private const string MSG_END_ACTION = "{0} - End Action"; // {0}=Chaves de contexto
 		private readonly LogLevel _LogLevel = LogLevel.DEBUG;
 		private ILog _Logger = null;
+		private readonly int _TimeOutWarn = int.MinValue;
 
 		/// <summary>
 		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="logLevel">Log Level</param>
-		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel)
+		/// <param name="timeOutWarn">Define um tempo em segundos. Quando ultrapassado o final da execucao sera registrado como WARN</param>
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel, int timeOutWarn)
 		{
 			if (!string.IsNullOrWhiteSpace(loggerName))
 			{
@@ -31,7 +33,15 @@
 			}
 
 			_LogLevel = logLevel;
+			_TimeOutWarn = timeOutWarn;
 		}
+
+		/// <summary>
+		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
+		/// </summary>
+		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
+		/// <param name="logLevel">Log Level</param>
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel) : this(loggerName, logLevel, int.MinValue) { }
 
 		/// <summary>
 		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
@@ -86,15 +96,21 @@
 			return actionDescriptor.GetLogger();
 		}
 
-		private static void ProcessLogActionExecuted(HttpActionExecutedContext actionExecutedContext, ILog logger, LogLevel logLevel)
+		private void ProcessLogActionExecuted(HttpActionExecutedContext actionExecutedContext, ILog logger, LogLevel logLevel)
 		{
 			var logContext = actionExecutedContext.ActionContext.GetLogContext(true);
+
+			bool warn = false;
 
 			if (actionExecutedContext.Request.Headers.Date.HasValue)
 			{
 				DateTimeOffset dtRequest = actionExecutedContext.Request.Headers.Date.Value;
 
 				var ts = DateTimeOffset.Now.Subtract(dtRequest);
+
+				warn = (_TimeOutWarn != int.MinValue && ts.TotalSeconds > _TimeOutWarn) ? true : false;
+
+				if (warn) logContext.Add("WarnTimeout", "true");
 
 				logContext.Add("Time", ts.TotalSeconds.ToString("#0.0000"));
 			}
@@ -104,7 +120,7 @@
 				logContext.Add("StatusCode", string.Format("{0}({1})", actionExecutedContext.Response.StatusCode.ToString(), (int)actionExecutedContext.Response.StatusCode));
 			}
 
-			LogLevel level = (actionExecutedContext.Exception == null) ? logLevel : LogLevel.ERROR;
+			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : _LogLevel) : LogLevel.ERROR;
 
 			logger.LogMessage(level, MSG_END_ACTION, logContext.ToJson());
 		}

@@ -18,5 +18,13 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		{
 			throw new InvalidOperationException("LogInfoWithHttpGet_Fail");
 		}
+
+		[HttpGet]
+		[Action4LogFilter("Action4LogTest", LogLevel.DEBUG, 2)]
+		public IHttpActionResult LogInfoWithHttpGet_WarnTimeout()
+		{
+			System.Threading.Thread.Sleep(3000);
+			return Ok("Success");
+		}
 	}
 }
