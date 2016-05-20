@@ -13,38 +13,93 @@
 	public class Action4LogFilterAttribute : ActionFilterAttribute
 	{
 		const string CONTEXT_ID = "ContextId";
-		private const string MSG_INIT_ACTION = "Starting Action";
-		private const string MSG_END_ACTION = "{0} - End Action"; // {0}=Chaves de contexto
-		private readonly LogLevel _LogLevel = LogLevel.DEBUG;
-		private ILog _Logger = null;
-		private readonly int _TimeOutWarn = int.MinValue;
+		const string MSG_STARTING_ACTION = "Starting Action";
+		const string MSG_END_ACTION = "End Action";
+
+		ILog _Logger = null;
+		LogLevel _ActionLogLevel = LogLevel.DEBUG;
+
+		#region Properties
 
 		/// <summary>
-		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
+		/// Tempo em segundos. Quando definido e se o tempo para o termino da execucao ultrapassa-lo o LogLevel será alterado para WARN ao registrar o fim da acao. -1 para desabilitar (padrao)
+		/// </summary>
+		public int TimeOutWarn
+		{
+			get
+			{
+				return _TimeOutWarn;
+			}
+
+			set
+			{
+				_TimeOutWarn = value;
+			}
+		}
+
+		int _TimeOutWarn = -1;
+
+		/// <summary>
+		/// Mensagem utilizada no registro de log para o inicio da execucao de uma acao. Valor padrao: Starting Action
+		/// </summary>
+		public string MessageStartingAction
+		{
+			get
+			{
+				return _MessageStartingAction;
+			}
+
+			set
+			{
+				_MessageStartingAction = value;
+			}
+		}
+
+		string _MessageStartingAction = MSG_STARTING_ACTION;
+
+		/// <summary>
+		/// Mensagem utilizada no registro de log para o fim da execucao de uma acao. Valor padrao: End Action
+		/// </summary>
+		public string MessageEndAction
+		{
+			get
+			{
+				return _MessageEndAction;
+			}
+
+			set
+			{
+				_MessageEndAction = value;
+			}
+		}
+
+		string _MessageEndAction = MSG_END_ACTION;
+
+		#endregion Properties
+
+		/// <summary>
+		/// Construtor para Action4LogFilter
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		/// <param name="logLevel">Log Level</param>
-		/// <param name="timeOutWarn">Define um tempo em segundos. Quando ultrapassado o final da execucao sera registrado como WARN</param>
-		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel, int timeOutWarn)
+		/// <param name="logLevel">LogLevel utilizado para registrar o inicio e em caso de sucesso o fim da execucao de uma acao. Caso termine em excecao sera registrado como ERROR. Padrao=DEBUG</param>
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel)
 		{
 			if (!string.IsNullOrWhiteSpace(loggerName))
 			{
 				_Logger = LogManager.GetLogger(loggerName);
 			}
 
-			_LogLevel = logLevel;
-			_TimeOutWarn = timeOutWarn;
+			_ActionLogLevel = logLevel;
 		}
 
 		/// <summary>
-		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
+		/// Construtor para Action4LogFilter. Assume LogLevel.DEBUG
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		/// <param name="logLevel">Log Level</param>
-		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel) : this(loggerName, logLevel, int.MinValue) { }
+		public Action4LogFilterAttribute(string loggerName) : this(loggerName, LogLevel.DEBUG) { }
 
 		/// <summary>
-		/// Construtor do filtro utilizado para logar o inicio e o fim de execucao de uma acao
+		/// Construtor para Action4LogFilter. Assume LoggerName=CONTROLLER.ACTION e LogLevel.DEBUG
 		/// </summary>
 		public Action4LogFilterAttribute() : this(null, LogLevel.DEBUG) { }
 
@@ -63,9 +118,9 @@
 
 			ILog logger = GetLogger(actionContext.ActionDescriptor);
 
-			if (logger.IsEnabled(_LogLevel))
+			if (logger.IsEnabled(_ActionLogLevel))
 			{
-				logger.LogMessage(_LogLevel, actionContext, MSG_INIT_ACTION);
+				logger.LogMessage(_ActionLogLevel, actionContext, MessageStartingAction);
 			}
 
 			return base.OnActionExecutingAsync(actionContext, cancellationToken);
@@ -81,10 +136,7 @@
 		{
 			ILog logger = GetLogger(actionExecutedContext.ActionContext.ActionDescriptor);
 
-			if (logger.IsEnabled(_LogLevel))
-			{
-				ProcessLogActionExecuted(actionExecutedContext, logger, _LogLevel);
-			}
+			ProcessLogActionExecuted(actionExecutedContext, logger, _ActionLogLevel);
 
 			return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
 		}
@@ -108,7 +160,7 @@
 
 				var ts = DateTimeOffset.Now.Subtract(dtRequest);
 
-				warn = (_TimeOutWarn != int.MinValue && ts.TotalSeconds > _TimeOutWarn) ? true : false;
+				warn = (TimeOutWarn >= 0 && ts.TotalSeconds > TimeOutWarn) ? true : false;
 
 				if (warn) logContext.Add("WarnTimeout", "true");
 
@@ -120,9 +172,9 @@
 				logContext.Add("StatusCode", string.Format("{0}({1})", actionExecutedContext.Response.StatusCode.ToString(), (int)actionExecutedContext.Response.StatusCode));
 			}
 
-			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : _LogLevel) : LogLevel.ERROR;
+			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : _ActionLogLevel) : LogLevel.ERROR;
 
-			logger.LogMessage(level, MSG_END_ACTION, logContext.ToJson());
+			logger.LogMessage(level, "{0} - {1}", logContext.ToJson(), MessageEndAction);
 		}
 	}
 }

@@ -73,6 +73,8 @@
 
 			PathAndQuery = actionContext.Request.RequestUri.PathAndQuery;
 
+			User = "Anonymous";
+
 			if (actionContext.RequestContext.Principal != null
 				&& actionContext.RequestContext.Principal.Identity != null
 				&& !string.IsNullOrWhiteSpace(actionContext.RequestContext.Principal.Identity.Name))

@@ -1,7 +1,6 @@
 ﻿namespace WebApiFilters4Log
 {
 	using Newtonsoft.Json;
-	using System;
 	using System.IO;
 	using System.Net;
 	using System.Net.Http;
@@ -21,8 +20,6 @@
 		/// <param name="formatting">Formato do json</param>
 		public JsonContent(object value, Formatting formatting = Formatting.Indented)
 		{
-			if (value == null) throw new ArgumentNullException("value");
-
 			var jw = new JsonTextWriter(new StreamWriter(_stream)) { Formatting = formatting };
 
 			var serializer = new JsonSerializer();

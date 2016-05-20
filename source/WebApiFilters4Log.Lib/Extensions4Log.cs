@@ -40,13 +40,17 @@
 			context.Add("Action", actionName);
 			context.Add("Method", actionContext.Request.Method.Method);
 
+			var userName = "Anonymous";
+
 			if (actionContext.RequestContext.Principal != null && actionContext.RequestContext.Principal.Identity != null)
 			{
 				context.Add("IsAuthenticated", actionContext.RequestContext.Principal.Identity.IsAuthenticated.ToString());
 
 				if (!string.IsNullOrWhiteSpace(actionContext.RequestContext.Principal.Identity.Name))
-					context.Add("UserName", actionContext.RequestContext.Principal.Identity.Name);
+					userName = actionContext.RequestContext.Principal.Identity.Name;
 			}
+
+			context.Add("UserName", userName);
 
 			return context;
 		}
@@ -291,14 +295,7 @@
 		{
 			if (kvp.Value == null) return "NULL";
 
-			try
-			{
-				return Newtonsoft.Json.JsonConvert.SerializeObject(kvp.Value).Replace("\"", "'");
-			}
-			catch
-			{
-				return "NOT SERIALIZABLE";
-			}
+			return Newtonsoft.Json.JsonConvert.SerializeObject(kvp.Value).Replace("\"", "'");
 		}
 
 		#endregion private methods

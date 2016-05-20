@@ -12,11 +12,11 @@
 	/// </summary>
 	public class Arguments4LogFilterAttribute : ActionFilterAttribute
 	{
-		private const string MSG_LOG_ARGS = "{0} ARGS {1}"; // {0}=Chaves de contexto / {1}=Argumentos
+		const string MSG_LOG_ARGS = "{0} ARGS {1}"; // {0}=Chaves de contexto / {1}=Argumentos
 
-		private string[] _MonitoredTypes = null;
-		private readonly LogLevel _LogLevel = LogLevel.DEBUG;
-		private readonly ILog _Logger = null;
+		string[] _MonitoredTypes = null;
+		LogLevel _LogLevel = LogLevel.DEBUG;
+		readonly ILog _Logger = null;
 
 		/// <summary>
 		/// Construtor do filtro utilizado para logar os argumentos

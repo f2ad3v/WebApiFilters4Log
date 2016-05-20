@@ -14,6 +14,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		}
 
 		[HttpPost]
+		[Infra.FakeUserFilter("UserTest")]
 		[Exception4LogFilter("ExceptionLogger", "", "DebugError")]
 		public IHttpActionResult LogDetailedException(Models.ClientModel client)
 		{
@@ -29,7 +30,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		}
 
 		[HttpPut]
-		[Action4LogFilter("ExceptionLogger", LogLevel.DEBUG)]
+		[Action4LogFilter("ERRORExceptionLogger", LogLevel.DEBUG)]
 		[Exception4LogFilter("ExceptionLogger", "0d059126-2ccb-40db-b65b-c020dd5b0810")]
 		public IHttpActionResult LogDetailedExceptionWithDebugKey([FromUri] Guid id, [FromBody] Models.ClientModel client)
 		{
