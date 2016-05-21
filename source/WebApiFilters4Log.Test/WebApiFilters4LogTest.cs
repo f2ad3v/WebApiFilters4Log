@@ -56,13 +56,17 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 
-				response = await client.GetAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_WarnTimeout");
+				response = await client.PostAsJsonAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_WarnTimeout", (WebApiTest.Models.ClientModel)null);
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
 				result = await response.Content.ReadAsAsync<string>();
 
 				Assert.AreEqual("Success", result);
+
+				response = await client.PostAsJsonAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_OnlyFail", (WebApiTest.Models.ClientModel)null);
+
+				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 
 				// Testes para Arguments4LogFilter
 				response = await client.GetAsync("http://testserver/api/Arguments4Log/LogPrimitiveTypes?id=6&value=2.34&text=testing");
@@ -260,6 +264,273 @@ namespace WebApiFilters4Log.Test
 
 		#endregion TestExtension4Log
 
+		#region TestAction4Log
+
+		private void TestAction4Log(string action4LogFileName, string action4LogFileNameTmp)
+		{
+			Assert.IsTrue(File.Exists(action4LogFileName));
+
+			File.Copy(action4LogFileName, action4LogFileNameTmp);
+
+			var lines = File.ReadAllLines(action4LogFileNameTmp);
+
+			Assert.AreEqual(8, lines.Length);
+
+			TestActionLogHttpGetSuccess(lines[0], lines[1]);
+			TestActionLogHttpGetFail(lines[2], lines[3]);
+			TestActionLogHttpGetWarnTimeout(lines[4], lines[5]);
+
+			var logArgs = new LogArgsInfo(lines[6], "argumentos");
+
+			Assert.IsTrue(logArgs.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgs.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual(1, logArgs.Arguments.Count);
+
+			var logEndErro = new LogInfo(lines[7]);
+
+			Assert.IsTrue(logEndErro.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logEndErro.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("End Action", logEndErro.Message);
+			Assert.AreEqual("ERROR", logEndErro.LogLevel);
+		}
+
+		private void TestActionLogHttpGetSuccess(string strLogStart, string strLogEnd)
+		{
+			var logStart = new LogInfo(strLogStart);
+
+			Assert.IsTrue(logStart.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("Starting Action", logStart.Message);
+			Assert.AreEqual("DEBUG", logStart.LogLevel);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
+
+			Guid contextId;
+			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.IsTrue(logStart.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logStart.Context["MachineName"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Action4Log", logStart.Context["Controller"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogInfoWithHttpGet_Success", logStart.Context["Action"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
+			Assert.AreEqual("GET", logStart.Context["Method"]);
+
+			var logEnd = new LogInfo(strLogEnd);
+
+			Assert.AreEqual("End Action", logEnd.Message);
+			Assert.AreEqual("DEBUG", logEnd.LogLevel);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
+
+			Guid contextIdEnd;
+			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.AreEqual(contextId, contextIdEnd);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("Time"));
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("StatusCode"));
+			Assert.AreEqual("OK(200)", logEnd.Context["StatusCode"]);
+		}
+
+		private void TestActionLogHttpGetFail(string strLogStart, string strLogEnd)
+		{
+			var logStart = new LogInfo(strLogStart);
+
+			Assert.IsTrue(logStart.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("Starting Action", logStart.Message);
+			Assert.AreEqual("INFO", logStart.LogLevel);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
+
+			Guid contextId;
+			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			var logEnd = new LogInfo(strLogEnd);
+
+			Assert.AreEqual("End Action", logEnd.Message);
+			Assert.AreEqual("ERROR", logEnd.LogLevel);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
+
+			Guid contextIdEnd;
+			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.AreEqual(contextId, contextIdEnd);
+		}
+
+		private void TestActionLogHttpGetWarnTimeout(string strLogStart, string strLogEnd)
+		{
+			var logStart = new LogInfo(strLogStart);
+
+			Assert.IsTrue(logStart.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("Inicio", logStart.Message);
+			Assert.AreEqual("DEBUG", logStart.LogLevel);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
+
+			Guid contextId;
+			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.IsTrue(logStart.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logStart.Context["MachineName"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Action4Log", logStart.Context["Controller"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogInfoWithHttpGet_WarnTimeout", logStart.Context["Action"]);
+
+			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
+			Assert.AreEqual("POST", logStart.Context["Method"]);
+
+			var logEnd = new LogInfo(strLogEnd);
+
+			Assert.AreEqual("Fim", logEnd.Message);
+			Assert.AreEqual("WARN", logEnd.LogLevel);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
+
+			Guid contextIdEnd;
+			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
+				Assert.Fail("ContextId nao e do tipo Guid");
+
+			Assert.AreEqual(contextId, contextIdEnd);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("Time"));
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("WarnTimeout"));
+			Assert.AreEqual("true", logEnd.Context["WarnTimeout"]);
+
+			Assert.IsTrue(logEnd.Context.ContainsKey("StatusCode"));
+			Assert.AreEqual("OK(200)", logEnd.Context["StatusCode"]);
+		}
+
+		#endregion TestAction4Log
+
+		#region TestArguments4Log
+
+		private void TestArguments4Log(string args4LogFileName, string args4LogFileNameTmp)
+		{
+			Assert.IsTrue(File.Exists(args4LogFileName));
+
+			File.Copy(args4LogFileName, args4LogFileNameTmp);
+
+			var lines = File.ReadAllLines(args4LogFileNameTmp);
+
+			Assert.AreEqual(3, lines.Length);
+
+			TestArg4LogPrimitiveTypes(lines[0]);
+			TestArg4LogComplexTypes(lines[1]);
+			TestArg4LogInformedComplexTypes(lines[2]);
+		}
+
+		private static void TestArg4LogPrimitiveTypes(string line)
+		{
+			var logArgInfo = new LogArgsInfo(line);
+
+			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("INFO", logArgInfo.LogLevel);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogPrimitiveTypes", logArgInfo.Context["Action"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
+			Assert.AreEqual("GET", logArgInfo.Context["Method"]);
+
+			Assert.AreEqual(3, logArgInfo.Arguments.Count);
+
+			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.Int32 id"));
+			Assert.AreEqual("6", logArgInfo.Arguments["System.Int32 id"]);
+
+			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.Decimal value"));
+			Assert.AreEqual("2.34", logArgInfo.Arguments["System.Decimal value"]);
+
+			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.String text"));
+			Assert.AreEqual("'testing'", logArgInfo.Arguments["System.String text"]);
+		}
+
+		private static void TestArg4LogComplexTypes(string line)
+		{
+			var logArgInfo = new LogArgsInfo(line);
+
+			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("DEBUG", logArgInfo.LogLevel);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogComplexTypes", logArgInfo.Context["Action"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
+			Assert.AreEqual("POST", logArgInfo.Context["Method"]);
+
+			var json = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient()).Replace("\"", "'");
+
+			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
+			Assert.AreEqual(json, logArgInfo.Arguments["WebApiFilters4Log.WebApiTest.Models.ClientModel client"]);
+		}
+
+		private static void TestArg4LogInformedComplexTypes(string line)
+		{
+			var logArgInfo = new LogArgsInfo(line, "argumentos");
+
+			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual("WARN", logArgInfo.LogLevel);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
+			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
+			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
+			Assert.AreEqual("LogInformedComplexTypes", logArgInfo.Context["Action"]);
+
+			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
+			Assert.AreEqual("PUT", logArgInfo.Context["Method"]);
+
+			Assert.AreEqual(1, logArgInfo.Arguments.Count);
+
+			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
+			Assert.AreEqual(jsonModelClient, logArgInfo.Arguments["WebApiFilters4Log.WebApiTest.Models.ClientModel client"]);
+		}
+
+		#endregion TestArguments4Log
+
 		#region TestException4Log
 
 		private void TestException4Log(string exception4LogFileName, string exception4LogFileNameTmp)
@@ -327,258 +598,5 @@ namespace WebApiFilters4Log.Test
 		}
 
 		#endregion TestException4Log
-
-		#region TestAction4Log
-
-		private void TestAction4Log(string action4LogFileName, string action4LogFileNameTmp)
-		{
-			Assert.IsTrue(File.Exists(action4LogFileName));
-
-			File.Copy(action4LogFileName, action4LogFileNameTmp);
-
-			var lines = File.ReadAllLines(action4LogFileNameTmp);
-
-			Assert.AreEqual(6, lines.Length);
-
-			TestActionLogHttpGetSuccess(lines[0], lines[1]);
-			TestActionLogHttpGetFail(lines[2], lines[3]);
-			TestActionLogHttpGetWarnTimeout(lines[4], lines[5]);
-
-		}
-
-		private void TestActionLogHttpGetWarnTimeout(string strLogStart, string strLogEnd)
-		{
-			var logStart = new LogInfo(strLogStart);
-
-			Assert.IsTrue(logStart.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("Starting Action", logStart.Message);
-			Assert.AreEqual("DEBUG", logStart.LogLevel);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
-
-			Guid contextId;
-			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			Assert.IsTrue(logStart.Context.ContainsKey("MachineName"));
-			Assert.AreEqual(Environment.MachineName, logStart.Context["MachineName"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Controller"));
-			Assert.AreEqual("Action4Log", logStart.Context["Controller"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Action"));
-			Assert.AreEqual("LogInfoWithHttpGet_WarnTimeout", logStart.Context["Action"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
-			Assert.AreEqual("GET", logStart.Context["Method"]);
-
-			var logEnd = new LogInfo(strLogEnd);
-
-			Assert.AreEqual("End Action", logEnd.Message);
-			Assert.AreEqual("WARN", logEnd.LogLevel);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
-
-			Guid contextIdEnd;
-			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			Assert.AreEqual(contextId, contextIdEnd);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("Time"));
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("WarnTimeout"));
-			Assert.AreEqual("true", logEnd.Context["WarnTimeout"]);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("StatusCode"));
-			Assert.AreEqual("OK(200)", logEnd.Context["StatusCode"]);
-		}
-
-		private static void TestActionLogHttpGetSuccess(string strLogStart, string strLogEnd)
-		{
-			var logStart = new LogInfo(strLogStart);
-
-			Assert.IsTrue(logStart.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("Starting Action", logStart.Message);
-			Assert.AreEqual("DEBUG", logStart.LogLevel);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
-
-			Guid contextId;
-			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			Assert.IsTrue(logStart.Context.ContainsKey("MachineName"));
-			Assert.AreEqual(Environment.MachineName, logStart.Context["MachineName"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Controller"));
-			Assert.AreEqual("Action4Log", logStart.Context["Controller"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Action"));
-			Assert.AreEqual("LogInfoWithHttpGet_Success", logStart.Context["Action"]);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
-			Assert.AreEqual("GET", logStart.Context["Method"]);
-
-			var logEnd = new LogInfo(strLogEnd);
-
-			Assert.AreEqual("End Action", logEnd.Message);
-			Assert.AreEqual("DEBUG", logEnd.LogLevel);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
-
-			Guid contextIdEnd;
-			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			Assert.AreEqual(contextId, contextIdEnd);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("Time"));
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("StatusCode"));
-			Assert.AreEqual("OK(200)", logEnd.Context["StatusCode"]);
-		}
-
-		private static void TestActionLogHttpGetFail(string strLogStart, string strLogEnd)
-		{
-			var logStart = new LogInfo(strLogStart);
-
-			Assert.IsTrue(logStart.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logStart.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("Starting Action", logStart.Message);
-			Assert.AreEqual("INFO", logStart.LogLevel);
-
-			Assert.IsTrue(logStart.Context.ContainsKey("ContextId"));
-
-			Guid contextId;
-			if (!Guid.TryParse(logStart.Context["ContextId"], out contextId))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			var logEnd = new LogInfo(strLogEnd);
-
-			Assert.AreEqual("End Action", logEnd.Message);
-			Assert.AreEqual("ERROR", logEnd.LogLevel);
-
-			Assert.IsTrue(logEnd.Context.ContainsKey("ContextId"));
-
-			Guid contextIdEnd;
-			if (!Guid.TryParse(logEnd.Context["ContextId"], out contextIdEnd))
-				Assert.Fail("ContextId nao e do tipo Guid");
-
-			Assert.AreEqual(contextId, contextIdEnd);
-		}
-
-		#endregion TestAction4Log
-
-		#region TestArguments4Log
-
-		private void TestArguments4Log(string args4LogFileName, string args4LogFileNameTmp)
-		{
-			Assert.IsTrue(File.Exists(args4LogFileName));
-
-			File.Copy(args4LogFileName, args4LogFileNameTmp);
-
-			var lines = File.ReadAllLines(args4LogFileNameTmp);
-
-			Assert.AreEqual(3, lines.Length);
-
-			TestArg4LogPrimitiveTypes(lines[0]);
-			TestArg4LogComplexTypes(lines[1]);
-			TestArg4LogInformedComplexTypes(lines[2]);
-		}
-
-		private static void TestArg4LogPrimitiveTypes(string line)
-		{
-			var logArgInfo = new LogArgsInfo(line);
-
-			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("DEBUG", logArgInfo.LogLevel);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
-			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
-			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
-			Assert.AreEqual("LogPrimitiveTypes", logArgInfo.Context["Action"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
-			Assert.AreEqual("GET", logArgInfo.Context["Method"]);
-
-			Assert.AreEqual(3, logArgInfo.Arguments.Count);
-
-			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.Int32 id"));
-			Assert.AreEqual("6", logArgInfo.Arguments["System.Int32 id"]);
-
-			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.Decimal value"));
-			Assert.AreEqual("2.34", logArgInfo.Arguments["System.Decimal value"]);
-
-			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.String text"));
-			Assert.AreEqual("'testing'", logArgInfo.Arguments["System.String text"]);
-		}
-
-		private static void TestArg4LogComplexTypes(string line)
-		{
-			var logArgInfo = new LogArgsInfo(line);
-
-			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("INFO", logArgInfo.LogLevel);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
-			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
-			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
-			Assert.AreEqual("LogComplexTypes", logArgInfo.Context["Action"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
-			Assert.AreEqual("POST", logArgInfo.Context["Method"]);
-
-			var json = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient()).Replace("\"", "'");
-
-			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
-			Assert.AreEqual(json, logArgInfo.Arguments["WebApiFilters4Log.WebApiTest.Models.ClientModel client"]);
-		}
-
-		private static void TestArg4LogInformedComplexTypes(string line)
-		{
-			var logArgInfo = new LogArgsInfo(line);
-
-			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
-			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
-
-			Assert.AreEqual("WARN", logArgInfo.LogLevel);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
-			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Controller"));
-			Assert.AreEqual("Arguments4Log", logArgInfo.Context["Controller"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Action"));
-			Assert.AreEqual("LogInformedComplexTypes", logArgInfo.Context["Action"]);
-
-			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
-			Assert.AreEqual("PUT", logArgInfo.Context["Method"]);
-
-			Assert.AreEqual(1, logArgInfo.Arguments.Count);
-
-			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
-			Assert.AreEqual(jsonModelClient, logArgInfo.Arguments["WebApiFilters4Log.WebApiTest.Models.ClientModel client"]);
-		}
-
-		#endregion TestArguments4Log
 	}
 }
