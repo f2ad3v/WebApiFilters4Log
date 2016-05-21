@@ -11,7 +11,7 @@
 		public Dictionary<string, string> Context { get; set; }
 		public Dictionary<string, string> Arguments { get; set; }
 
-		public LogArgsInfo(string logLine)
+		public LogArgsInfo(string logLine, string argumentsMessage = "ARGS")
 		{
 			var dtStr = logLine.Substring(1, logLine.IndexOf(']') - 1);
 
@@ -28,11 +28,13 @@
 
 			rest = rest.Remove(0, rest.IndexOf("- ") + 2);
 
-			var dicContext = rest.Substring(0, rest.IndexOf("} ARGS {") + 1);
+			string halfMessage = string.Concat("} ", argumentsMessage, " {");
+
+			var dicContext = rest.Substring(0, rest.IndexOf(halfMessage) + 1);
 
 			Context = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dicContext);
 
-			rest = rest.Remove(0, rest.IndexOf("} ARGS {") + 7);
+			rest = rest.Remove(0, rest.IndexOf(halfMessage) + argumentsMessage.Length + 3);
 
 			Arguments = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(rest);
 		}

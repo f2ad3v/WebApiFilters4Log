@@ -1,5 +1,6 @@
 ﻿namespace WebApiFilters4Log
 {
+	using log4net;
 	using Newtonsoft.Json;
 	using System;
 	using System.Linq;
@@ -15,12 +16,48 @@
 	/// </summary>
 	public class Exception4LogFilterAttribute : ExceptionFilterAttribute
 	{
-		private const string HEADER_DEBUG = "X-DebugError";
-		private const string DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss.fffff";
+		const string HEADER_DEBUG = "X-DebugError";
+		const string DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss.fffff";
 
-		private readonly string _LoggerName = string.Empty;
-		private readonly string _DebugKey = string.Empty;
-		private readonly string _HeaderName = HEADER_DEBUG;
+		ILog Logger = null;
+
+		/// <summary>
+		/// Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"
+		/// </summary>
+		public string DebugKey
+		{
+			get
+			{
+				return _DebugKey;
+			}
+			set
+			{
+				_DebugKey = value;
+			}
+		}
+
+		string _DebugKey = string.Empty;
+
+		/// <summary>
+		/// Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado "X-DebugError"
+		/// </summary>
+		public string HeaderName
+		{
+			get
+			{
+				return _HeaderName;
+			}
+			set
+			{
+				_HeaderName = value;
+			}
+		}
+		string _HeaderName = HEADER_DEBUG;
+
+		public Exception4LogFilterAttribute(string loggerName)
+		{
+			Logger = LogManager.GetLogger(loggerName);
+		}
 
 		/// <summary>
 		/// Construtor do filtro utilizado para logar excecoes e tratar o resultado adequadamente
@@ -28,19 +65,11 @@
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="debugKey">Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"</param>
 		/// <param name="headerName">Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado o nome "X-DebugError"</param>
-		public Exception4LogFilterAttribute(string loggerName, string debugKey, string headerName = HEADER_DEBUG)
+		[Obsolete("Obsoleto. Utilize Exception4LogFilterAttribute(\"LoggerName\", HeaderName = \"DebugError\", DebugKey = \"trustApiKey\")")]
+		public Exception4LogFilterAttribute(string loggerName, string debugKey, string headerName = HEADER_DEBUG) : this(loggerName)
 		{
-			_LoggerName = loggerName;
-			_DebugKey = debugKey;
-			_HeaderName = headerName;
-		}
-
-		/// <summary>
-		/// Construtor do filtro utilizado para logar excecoes e tratar o resultado adequadamente
-		/// </summary>
-		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		public Exception4LogFilterAttribute(string loggerName) : this(loggerName, string.Empty)
-		{
+			DebugKey = debugKey;
+			HeaderName = headerName;
 		}
 
 		/// <summary>
@@ -52,8 +81,6 @@
 		public override Task OnExceptionAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
 		{
 			var logContext = actionExecutedContext.ActionContext.GetLogContext();
-
-			log4net.ILog logger = log4net.LogManager.GetLogger(_LoggerName);
 
 			Guid errorId = Guid.NewGuid();
 			DateTime dtError = DateTime.Now;
@@ -68,16 +95,16 @@
 
 			string jsonMsg = JsonConvert.SerializeObject(logObj);
 
-			logger.Error(jsonMsg);
+			Logger.Error(jsonMsg);
 
 			bool returnErrorDetail = false;
 
-			if (actionExecutedContext.Request.Headers.Contains(_HeaderName))
+			if (actionExecutedContext.Request.Headers.Contains(HeaderName))
 			{
-				var values = actionExecutedContext.Request.Headers.GetValues(_HeaderName).Select(v => v.ToLower()).ToList();
+				var values = actionExecutedContext.Request.Headers.GetValues(HeaderName).Select(v => v.ToLower()).ToList();
 
-				returnErrorDetail = (string.IsNullOrWhiteSpace(_DebugKey) && values.Contains("true")) 
-					|| (!string.IsNullOrWhiteSpace(_DebugKey) && values.Contains(_DebugKey.ToLower()));
+				returnErrorDetail = (string.IsNullOrWhiteSpace(DebugKey) && values.Contains("true")) 
+					|| (!string.IsNullOrWhiteSpace(DebugKey) && values.Contains(DebugKey.ToLower()));
 			}
 
 			if (returnErrorDetail) 

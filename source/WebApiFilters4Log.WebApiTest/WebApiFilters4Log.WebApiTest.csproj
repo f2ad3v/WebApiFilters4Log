@@ -148,6 +148,7 @@
     <Compile Include="Controllers\Action4LogController.cs" />
     <Compile Include="Controllers\Arguments4LogController.cs" />
     <Compile Include="Controllers\Exception4LogController.cs" />
+    <Compile Include="Infra\FakeUserFilterAttribute.cs" />
     <Compile Include="Infra\WebApiConfig.cs" />
     <Compile Include="Models\ClientModel.cs" />
     <Compile Include="Models\OrderItemModel.cs" />

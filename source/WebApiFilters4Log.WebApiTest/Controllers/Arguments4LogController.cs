@@ -12,14 +12,14 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		}
 
 		[HttpPost]
-		[Arguments4LogFilter("Args4Log", LogLevel.INFO, "*")]
+		[Arguments4LogFilter("Args4Log", "*", ArgumentsLogLevel = LogLevel.DEBUG)]
 		public IHttpActionResult LogComplexTypes(Models.ClientModel client)
 		{
 			return Ok();
 		}
 
 		[HttpPut]
-		[Arguments4LogFilter("Args4Log", LogLevel.WARN, "WebApiFilters4Log.WebApiTest.Models.ClientModel")]
+		[Arguments4LogFilter("Args4Log", "WebApiFilters4Log.WebApiTest.Models.ClientModel", ArgumentsLogLevel = LogLevel.WARN, ArgumentsMessage = "argumentos")]
 		public IHttpActionResult LogInformedComplexTypes([FromUri] int id, [FromBody] Models.ClientModel client)
 		{
 			return Ok();
