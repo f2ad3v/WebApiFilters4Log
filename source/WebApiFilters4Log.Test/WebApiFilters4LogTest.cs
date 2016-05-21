@@ -274,13 +274,20 @@ namespace WebApiFilters4Log.Test
 
 			var lines = File.ReadAllLines(action4LogFileNameTmp);
 
-			Assert.AreEqual(7, lines.Length);
+			Assert.AreEqual(8, lines.Length);
 
 			TestActionLogHttpGetSuccess(lines[0], lines[1]);
 			TestActionLogHttpGetFail(lines[2], lines[3]);
 			TestActionLogHttpGetWarnTimeout(lines[4], lines[5]);
 
-			var logEndErro = new LogInfo(lines[6]);
+			var logArgs = new LogArgsInfo(lines[6], "argumentos");
+
+			Assert.IsTrue(logArgs.DateTimeLog.HasValue);
+			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgs.DateTimeLog.Value.ToString("yyyyMMddHH"));
+
+			Assert.AreEqual(1, logArgs.Arguments.Count);
+
+			var logEndErro = new LogInfo(lines[7]);
 
 			Assert.IsTrue(logEndErro.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logEndErro.DateTimeLog.Value.ToString("yyyyMMddHH"));
@@ -392,7 +399,7 @@ namespace WebApiFilters4Log.Test
 			Assert.AreEqual("LogInfoWithHttpGet_WarnTimeout", logStart.Context["Action"]);
 
 			Assert.IsTrue(logStart.Context.ContainsKey("Method"));
-			Assert.AreEqual("GET", logStart.Context["Method"]);
+			Assert.AreEqual("POST", logStart.Context["Method"]);
 
 			var logEnd = new LogInfo(strLogEnd);
 
@@ -442,7 +449,7 @@ namespace WebApiFilters4Log.Test
 			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
 
-			Assert.AreEqual("DEBUG", logArgInfo.LogLevel);
+			Assert.AreEqual("INFO", logArgInfo.LogLevel);
 
 			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
 			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
@@ -475,7 +482,7 @@ namespace WebApiFilters4Log.Test
 			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));
 
-			Assert.AreEqual("INFO", logArgInfo.LogLevel);
+			Assert.AreEqual("DEBUG", logArgInfo.LogLevel);
 
 			Assert.IsTrue(logArgInfo.Context.ContainsKey("MachineName"));
 			Assert.AreEqual(Environment.MachineName, logArgInfo.Context["MachineName"]);
@@ -497,7 +504,7 @@ namespace WebApiFilters4Log.Test
 
 		private static void TestArg4LogInformedComplexTypes(string line)
 		{
-			var logArgInfo = new LogArgsInfo(line);
+			var logArgInfo = new LogArgsInfo(line, "argumentos");
 
 			Assert.IsTrue(logArgInfo.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgInfo.DateTimeLog.Value.ToString("yyyyMMddHH"));

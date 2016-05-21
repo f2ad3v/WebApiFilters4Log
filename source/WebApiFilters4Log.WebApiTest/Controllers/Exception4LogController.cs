@@ -15,7 +15,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 
 		[HttpPost]
 		[Infra.FakeUserFilter("UserTest")]
-		[Exception4LogFilter("ExceptionLogger", "", "DebugError")]
+		[Exception4LogFilter("ExceptionLogger", HeaderName = "DebugError", DebugKey = "")]
 		public IHttpActionResult LogDetailedException(Models.ClientModel client)
 		{
 			try

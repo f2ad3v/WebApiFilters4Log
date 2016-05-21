@@ -2,6 +2,7 @@
 {
 	using log4net;
 	using System;
+	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Web.Http.Controllers;
@@ -15,9 +16,12 @@
 		const string CONTEXT_ID = "ContextId";
 		const string MSG_STARTING_ACTION = "Starting Action";
 		const string MSG_END_ACTION = "End Action";
+		const string MSG_LOG_ARGS = "ARGS";
 
-		ILog _Logger = null;
-		LogLevel _ActionLogLevel = LogLevel.DEBUG;
+		ILog Logger = null;
+		ILog ArgLogger = null;
+		LogLevel ActionLogLevel = LogLevel.DEBUG;
+		string FormatLogArguments = string.Empty;
 
 		#region Properties
 
@@ -30,7 +34,6 @@
 			{
 				return _TimeOutWarn;
 			}
-
 			set
 			{
 				_TimeOutWarn = value;
@@ -48,7 +51,6 @@
 			{
 				return _MessageStartingAction;
 			}
-
 			set
 			{
 				_MessageStartingAction = value;
@@ -66,7 +68,6 @@
 			{
 				return _MessageEndAction;
 			}
-
 			set
 			{
 				_MessageEndAction = value;
@@ -74,6 +75,76 @@
 		}
 
 		string _MessageEndAction = MSG_END_ACTION;
+
+		/// <summary>
+		/// LogLevel utilizado para registrar os argumentos de uma acao. Padrao "INFO"
+		/// </summary>
+		public LogLevel ArgumentsLogLevel
+		{
+			get
+			{
+				return _ArgumentsLogLevel;
+			}
+			set
+			{
+				_ArgumentsLogLevel = value;
+			}
+		}
+
+		LogLevel _ArgumentsLogLevel = LogLevel.INFO;
+
+		/// <summary>
+		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
+		/// </summary>
+		public string ArgumentsLoggerName
+		{
+			get
+			{
+				return _ArgumentsLoggerName;
+			}
+			set
+			{
+				_ArgumentsLoggerName = value;
+				ChangeArgumentsLogger();
+			}
+		}
+
+		string _ArgumentsLoggerName = string.Empty;
+
+		/// <summary>
+		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
+		/// </summary>
+		public string ArgumentsMessage
+		{
+			get
+			{
+				return _ArgumentsMessage;
+			}
+			set
+			{
+				_ArgumentsMessage = value;
+				ChangeFormatMessage();
+			}
+		}
+
+		string _ArgumentsMessage = MSG_LOG_ARGS;
+
+		/// <summary>
+		/// Lista de nome completo dos tipos a serem monitorados separados por ponto e virgula ';'. Use "*" para todos. Ex: "System.Int32;System.String"
+		/// </summary>
+		public string MonitoredTypes
+		{
+			get
+			{
+				return _MonitoredTypes;
+			}
+			set
+			{
+				_MonitoredTypes = value;
+			}
+		}
+
+		string _MonitoredTypes = string.Empty;
 
 		#endregion Properties
 
@@ -86,10 +157,12 @@
 		{
 			if (!string.IsNullOrWhiteSpace(loggerName))
 			{
-				_Logger = LogManager.GetLogger(loggerName);
+				Logger = LogManager.GetLogger(loggerName);
 			}
 
-			_ActionLogLevel = logLevel;
+			ActionLogLevel = logLevel;
+
+			ChangeFormatMessage();
 		}
 
 		/// <summary>
@@ -118,10 +191,12 @@
 
 			ILog logger = GetLogger(actionContext.ActionDescriptor);
 
-			if (logger.IsEnabled(_ActionLogLevel))
+			if (logger.IsEnabled(ActionLogLevel))
 			{
-				logger.LogMessage(_ActionLogLevel, actionContext, MessageStartingAction);
+				logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
 			}
+
+			ArgumentsLog(actionContext);
 
 			return base.OnActionExecutingAsync(actionContext, cancellationToken);
 		}
@@ -136,16 +211,23 @@
 		{
 			ILog logger = GetLogger(actionExecutedContext.ActionContext.ActionDescriptor);
 
-			ProcessLogActionExecuted(actionExecutedContext, logger, _ActionLogLevel);
+			ProcessLogActionExecuted(actionExecutedContext, logger, ActionLogLevel);
 
 			return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
 		}
 
-		private ILog GetLogger(HttpActionDescriptor actionDescriptor)
+		private void ArgumentsLog(HttpActionContext actionContext)
 		{
-			if (_Logger != null) return _Logger;
+			var monitoredTypes = !string.IsNullOrWhiteSpace(MonitoredTypes) ? MonitoredTypes.Split(';') : new string[0];
 
-			return actionDescriptor.GetLogger();
+			Dictionary<string, string> logArgs = actionContext.ActionArguments.GetActionArguments(monitoredTypes);
+
+			if (logArgs.Count > 0)
+			{
+				Dictionary<string, string> logContext = actionContext.GetLogContext();
+
+				ArgLogger.LogMessage(ArgumentsLogLevel, FormatLogArguments, logContext.ToJson(), logArgs.ToJson());
+			}
 		}
 
 		private void ProcessLogActionExecuted(HttpActionExecutedContext actionExecutedContext, ILog logger, LogLevel logLevel)
@@ -172,9 +254,26 @@
 				logContext.Add("StatusCode", string.Format("{0}({1})", actionExecutedContext.Response.StatusCode.ToString(), (int)actionExecutedContext.Response.StatusCode));
 			}
 
-			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : _ActionLogLevel) : LogLevel.ERROR;
+			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : ActionLogLevel) : LogLevel.ERROR;
 
 			logger.LogMessage(level, "{0} - {1}", logContext.ToJson(), MessageEndAction);
+		}
+
+		private ILog GetLogger(HttpActionDescriptor actionDescriptor)
+		{
+			if (Logger != null) return Logger;
+
+			return actionDescriptor.GetLogger();
+		}
+
+		private void ChangeArgumentsLogger()
+		{
+			ArgLogger = LogManager.GetLogger(ArgumentsLoggerName);
+		}
+
+		internal void ChangeFormatMessage()
+		{
+			FormatLogArguments = string.Concat("{0} ", ArgumentsMessage, " {1}");
 		}
 	}
 }

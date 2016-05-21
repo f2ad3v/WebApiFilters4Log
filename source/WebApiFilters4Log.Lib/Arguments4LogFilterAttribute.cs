@@ -12,30 +12,72 @@
 	/// </summary>
 	public class Arguments4LogFilterAttribute : ActionFilterAttribute
 	{
-		const string MSG_LOG_ARGS = "{0} ARGS {1}"; // {0}=Chaves de contexto / {1}=Argumentos
+		const string MSG_LOG_ARGS = "ARGS";
 
-		string[] _MonitoredTypes = null;
-		LogLevel _LogLevel = LogLevel.DEBUG;
-		readonly ILog _Logger = null;
+		string FormatLogArguments = string.Empty;
+		internal string[] _MonitoredTypes = null;
+		ILog Logger = null;
+
+		#region Properties
 
 		/// <summary>
-		/// Construtor do filtro utilizado para logar os argumentos
+		/// LogLevel utilizado para registrar os argumentos de uma acao. Padrao "INFO"
 		/// </summary>
-		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		/// <param name="logLevel">Log Level</param>
-		/// <param name="typesMonitored">Nome completo dos tipos a serem monitorados. Use "*" para todos</param>
-		public Arguments4LogFilterAttribute(string loggerName, LogLevel logLevel, params string[] typesMonitored)
+		public LogLevel ArgumentsLogLevel
 		{
-			_LogLevel = logLevel;
-			_Logger = LogManager.GetLogger(loggerName);
-			_MonitoredTypes = typesMonitored;
+			get
+			{
+				return _ArgumentsLogLevel;
+			}
+			set
+			{
+				_ArgumentsLogLevel = value;
+			}
 		}
 
+		LogLevel _ArgumentsLogLevel = LogLevel.INFO;
+
+		/// <summary>
+		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
+		/// </summary>
+		public string ArgumentsMessage
+		{
+			get
+			{
+				return _ArgumentsMessage;
+			}
+			set
+			{
+				_ArgumentsMessage = value;
+				ChangeFormatMessage();
+			}
+		}
+
+		string _ArgumentsMessage = MSG_LOG_ARGS;
+
+		#endregion Properties
+
 		/// <summary>
 		/// Construtor do filtro utilizado para logar os argumentos
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		public Arguments4LogFilterAttribute(string loggerName) : this(loggerName, LogLevel.DEBUG, "*") { }
+		/// <param name="typesMonitored">Nome completo dos tipos a serem monitorados. Use "*" para todos</param>
+		public Arguments4LogFilterAttribute(string loggerName, params string[] typesMonitored)
+		{
+			Logger = LogManager.GetLogger(loggerName);
+
+			if (typesMonitored != null && typesMonitored.Length > 0)
+				_MonitoredTypes = typesMonitored;
+			else
+				_MonitoredTypes = new string[] { "*" };
+
+			ChangeFormatMessage();
+		}
+
+		internal void ChangeFormatMessage()
+		{
+			FormatLogArguments = string.Concat("{0} ", ArgumentsMessage, " {1}");
+		}
 
 		/// <summary>
 		/// OnActionExecutingAsync executado antes da action
@@ -51,7 +93,7 @@
 			{
 				Dictionary<string, string> logContext = actionContext.GetLogContext();
 
-				_Logger.LogMessage(_LogLevel, MSG_LOG_ARGS, logContext.ToJson(), logArgs.ToJson());
+				Logger.LogMessage(ArgumentsLogLevel, FormatLogArguments, logContext.ToJson(), logArgs.ToJson());
 			}
 
 			return base.OnActionExecutingAsync(actionContext, cancellationToken);
