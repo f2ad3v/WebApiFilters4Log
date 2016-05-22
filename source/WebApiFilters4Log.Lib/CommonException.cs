@@ -17,8 +17,9 @@
 		public CommonException(string message, Guid id, Exception innerException)
 			: base(message, innerException)
 		{
-			DateTimeError = DateTime.Now;
 			Id = id;
+
+			DateTimeError = DateTime.Now;
 		}
 
 		/// <summary>

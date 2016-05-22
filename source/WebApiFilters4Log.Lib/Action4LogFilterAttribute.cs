@@ -153,7 +153,8 @@
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="logLevel">LogLevel utilizado para registrar o inicio e em caso de sucesso o fim da execucao de uma acao. Caso termine em excecao sera registrado como ERROR. Padrao=DEBUG</param>
-		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel)
+		/// <param name="timeOutWarn">Tempo em segundos. Quando definido e se o tempo para o termino da execucao ultrapassa-lo o LogLevel será alterado para WARN ao registrar o fim da acao. -1 para desabilitar (padrao)</param>
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel, int timeOutWarn = -1)
 		{
 			if (!string.IsNullOrWhiteSpace(loggerName))
 			{
@@ -161,6 +162,8 @@
 			}
 
 			ActionLogLevel = logLevel;
+
+			TimeOutWarn = timeOutWarn;
 
 			ChangeFormatMessage();
 		}
