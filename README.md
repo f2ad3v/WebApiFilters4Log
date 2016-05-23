@@ -139,7 +139,7 @@ public class Action4LogController : ApiController
 	}
 	// Resultado obtido utilizando o PatternLayout do log4net "[%date{yyyyMMdd HH:mm:ss.fff}] [%thread] %level - %message%newline":
 	// [20160505 19:51:32.179] [10] DENUG - {"ContextId":"898a89d7-d01-4956-8c84-15f659460b34","MachineName":"F2ASRV","Controller":"Action4Log","Action":"LogInfoWithHttpGet_WarnTimeout","Method":"GET","UserName":"Anonymous"} - Starting Test
-	// [20160505 19:51:32.241] [10] INFO -  {"MachineName":"F2ASRV","Controller":"Action4Log","Action":"LogInfoWithHttpGet_WarnTimeout","Method":"POST","UserName":"Anonymous"} ARGS {"WebApiFilters4Log.WebApiTest.Models.ClientModel client":"{'Id':'711192f5-a832-47e6-82cf-d2dda129f406','Name':'Jose Fulano','Years':35,'Emails':['joseFulano@teste.com','joseFulano2@gmail.com'],'Orders':[{'Date':'2016-02-25T11:27:05','Closed': true,'Items':[{'Product':'Arroz','Amount':2,'Value':13.23},{'Product':'Feijao','Amount':4,'Value':8.74}]}]}"}
+	// [20160505 19:51:32.241] [10] INFO - {"ContextId":"898a89d7-d01-4956-8c84-15f659460b34","MachineName":"F2ASRV","Controller":"Action4Log","Action":"LogInfoWithHttpGet_WarnTimeout","Method":"POST","UserName":"Anonymous"} ARGS {"WebApiFilters4Log.WebApiTest.Models.ClientModel client":"{'Id':'711192f5-a832-47e6-82cf-d2dda129f406','Name':'Jose Fulano','Years':35,'Emails':['joseFulano@teste.com','joseFulano2@gmail.com'],'Orders':[{'Date':'2016-02-25T11:27:05','Closed': true,'Items':[{'Product':'Arroz','Amount':2,'Value':13.23},{'Product':'Feijao','Amount':4,'Value':8.74}]}]}"}
 	// [20160505 19:52:43.181] [10] WARN - {"ContextId":"898a89d7-dd01-4956-8c84-15f659460b34","WarnTimeout":"true","Time":"31,002"} - End Test
 }
 ```
