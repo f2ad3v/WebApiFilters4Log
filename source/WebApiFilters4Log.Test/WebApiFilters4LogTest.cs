@@ -48,9 +48,10 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-				var result = await response.Content.ReadAsAsync<string>();
+				var resultClient = await response.Content.ReadAsAsync<WebApiTest.Models.ClientModel>();
 
-				Assert.AreEqual("Success", result);
+				Assert.IsNotNull(resultClient);
+				Assert.IsInstanceOfType(resultClient, typeof(WebApiTest.Models.ClientModel));
 
 				response = await client.GetAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_Fail");
 
@@ -60,7 +61,7 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-				result = await response.Content.ReadAsAsync<string>();
+				var result = await response.Content.ReadAsAsync<string>();
 
 				Assert.AreEqual("Success", result);
 

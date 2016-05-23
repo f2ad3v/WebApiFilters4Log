@@ -9,7 +9,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		[Action4LogFilter()]
 		public IHttpActionResult LogInfoWithHttpGet_Success()
 		{
-			return Ok("Success");
+			return Ok(Models.ClientModel.GetFakeClient());
 		}
 
 		[HttpGet]
