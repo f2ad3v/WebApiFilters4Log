@@ -187,8 +187,12 @@
 		/// <returns>Task</returns>
 		public override Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
 		{
+			var contextId = Guid.NewGuid().ToString();
+
 			if (!actionContext.Request.Headers.Contains(CONTEXT_ID))
-				actionContext.Request.Headers.Add(CONTEXT_ID, Guid.NewGuid().ToString());
+				actionContext.Request.Headers.Add(CONTEXT_ID, contextId);
+
+			ThreadContext.Properties[CONTEXT_ID] = contextId;
 
 			actionContext.Request.Headers.Date = DateTimeOffset.Now;
 
