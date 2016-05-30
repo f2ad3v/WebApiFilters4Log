@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiFilters4Log.WebApiTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiFilters4Log.Test", "WebApiFilters4Log.Test\WebApiFilters4Log.Test.csproj", "{A1DE7591-3A02-4BAA-A0FC-AC042E5A8763}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6C87BE43-C516-4453-AFA4-50AFFA3CC16C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{69C4C38C-63F6-4C9E-9DB6-FC81BC4AFADC} = {6C87BE43-C516-4453-AFA4-50AFFA3CC16C}
+		{A1DE7591-3A02-4BAA-A0FC-AC042E5A8763} = {6C87BE43-C516-4453-AFA4-50AFFA3CC16C}
 	EndGlobalSection
 EndGlobal
