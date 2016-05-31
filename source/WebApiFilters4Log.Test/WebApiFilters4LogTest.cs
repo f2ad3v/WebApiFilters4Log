@@ -15,7 +15,7 @@ namespace WebApiFilters4Log.Test
 	{
 		private const string LOG_FILE_NAME = ".\\log\\{0}.log";
 		private const string LOG_FILE_NAME_TMP = ".\\log\\{0}Tmp.log";
-		private static string jsonModelClient = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient()).Replace("\"", "'");
+		private static string jsonModelClient = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient());
 
 		#region TestFilters
 
@@ -473,7 +473,7 @@ namespace WebApiFilters4Log.Test
 			Assert.AreEqual("2.34", logArgInfo.Arguments["System.Decimal value"]);
 
 			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("System.String text"));
-			Assert.AreEqual("'testing'", logArgInfo.Arguments["System.String text"]);
+			Assert.AreEqual("testing", logArgInfo.Arguments["System.String text"]);
 		}
 
 		private static void TestArg4LogComplexTypes(string line)
@@ -497,7 +497,7 @@ namespace WebApiFilters4Log.Test
 			Assert.IsTrue(logArgInfo.Context.ContainsKey("Method"));
 			Assert.AreEqual("POST", logArgInfo.Context["Method"]);
 
-			var json = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient()).Replace("\"", "'");
+			var json = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient());
 
 			Assert.IsTrue(logArgInfo.Arguments.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
 			Assert.AreEqual(json, logArgInfo.Arguments["WebApiFilters4Log.WebApiTest.Models.ClientModel client"]);
@@ -583,7 +583,7 @@ namespace WebApiFilters4Log.Test
 			if (testPut)
 			{
 				Assert.IsTrue(exInfo.AdditionalInfo.ContainsKey("System.Guid id"));
-				Assert.AreEqual("'eb60d56e-5b4a-4f13-a9f2-925b9297c9c9'", exInfo.AdditionalInfo["System.Guid id"]);
+				Assert.AreEqual("\"eb60d56e-5b4a-4f13-a9f2-925b9297c9c9\"", exInfo.AdditionalInfo["System.Guid id"]);
 			}
 
 			Assert.IsTrue(exInfo.AdditionalInfo.ContainsKey("WebApiFilters4Log.WebApiTest.Models.ClientModel client"));
