@@ -6,7 +6,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 	public class Action4LogController : ApiController
 	{
 		[HttpGet]
-		[Action4LogFilter()]
+		[Action4LogFilter]
 		public IHttpActionResult LogInfoWithHttpGet_Success()
 		{
 			return Ok(Models.ClientModel.GetFakeClient());
@@ -21,7 +21,7 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 
 		[HttpPost]
 		[Infra.FakeUserFilter("UserTest")]
-		[Action4LogFilter("Action4LogTest", LogLevel.DEBUG, TimeOutWarn = 2, MessageStartingAction = "Inicio", MessageEndAction = "Fim", ArgumentsLoggerName = "TESTArgs4Log", MonitoredTypes = null, ArgumentsLogLevel = LogLevel.INFO)]
+		[Action4LogFilter("Action4LogTest", LogLevel.DEBUG, 2, ArgumentsLoggerName = "TESTArgs4Log", MonitoredTypes = null, MessageStartingAction = "Inicio", MessageEndAction = "Fim")]
 		public IHttpActionResult LogInfoWithHttpGet_WarnTimeout(Models.ClientModel client)
 		{
 			System.Threading.Thread.Sleep(3000);
@@ -34,5 +34,14 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		{
 			throw new InvalidOperationException("LogInfoWithHttpGet_OnlyFail");
 		}
+
+		[HttpGet]
+		[Action4LogFilter]
+		[IgnoreLog]
+		public IHttpActionResult LogInfoWithHttpGet_IgnoreFilters()
+		{
+			return Ok(Models.ClientModel.GetFakeClient());
+		}
+
 	}
 }

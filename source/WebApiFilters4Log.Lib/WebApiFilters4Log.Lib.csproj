@@ -74,6 +74,7 @@
     <Compile Include="ControllerException.cs" />
     <Compile Include="Exception4LogFilterAttribute.cs" />
     <Compile Include="Extensions4Log.cs" />
+    <Compile Include="IgnoreLogAttribute.cs" />
     <Compile Include="JsonContent.cs" />
     <Compile Include="log4netExtensions.cs" />
     <Compile Include="LogLevel.cs" />

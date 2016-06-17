@@ -74,11 +74,6 @@
 			ChangeFormatMessage();
 		}
 
-		internal void ChangeFormatMessage()
-		{
-			FormatLogArguments = string.Concat("{0} ", ArgumentsMessage, " {1}");
-		}
-
 		/// <summary>
 		/// OnActionExecutingAsync executado antes da action
 		/// </summary>
@@ -87,6 +82,9 @@
 		/// <returns>Task</returns>
 		public override Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
 		{
+			if (actionContext.ActionDescriptor.IgnoreFilters())
+				return base.OnActionExecutingAsync(actionContext, cancellationToken);
+
 			Dictionary<string, string> logArgs = actionContext.ActionArguments.GetActionArguments(_MonitoredTypes);
 
 			if (logArgs.Count > 0)
@@ -97,6 +95,11 @@
 			}
 
 			return base.OnActionExecutingAsync(actionContext, cancellationToken);
+		}
+
+		internal void ChangeFormatMessage()
+		{
+			FormatLogArguments = string.Concat("{0} ", ArgumentsMessage, " {1}");
 		}
 	}
 }
