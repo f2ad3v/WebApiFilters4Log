@@ -21,6 +21,8 @@
 
 		ILog Logger = null;
 
+		#region Properties
+
 		/// <summary>
 		/// Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"
 		/// </summary>
@@ -52,8 +54,15 @@
 				_HeaderName = value;
 			}
 		}
+
 		string _HeaderName = HEADER_DEBUG;
 
+		#endregion Properties
+
+		/// <summary>
+		/// Construtor do filtro utilizado para logar excecoes e tratar o resultado adequadamente
+		/// </summary>
+		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		public Exception4LogFilterAttribute(string loggerName)
 		{
 			Logger = LogManager.GetLogger(loggerName);
@@ -65,7 +74,6 @@
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="debugKey">Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"</param>
 		/// <param name="headerName">Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado o nome "X-DebugError"</param>
-		[Obsolete("Obsoleto. Utilize Exception4LogFilterAttribute(\"LoggerName\", HeaderName = \"DebugError\", DebugKey = \"trustApiKey\")")]
 		public Exception4LogFilterAttribute(string loggerName, string debugKey, string headerName = HEADER_DEBUG) : this(loggerName)
 		{
 			DebugKey = debugKey;
@@ -95,7 +103,7 @@
 
 			string jsonMsg = JsonConvert.SerializeObject(logObj);
 
-			Logger.Error(jsonMsg);
+			if (!actionExecutedContext.ActionContext.ActionDescriptor.IgnoreFilters()) Logger.Error(jsonMsg);
 
 			bool returnErrorDetail = false;
 
@@ -103,11 +111,11 @@
 			{
 				var values = actionExecutedContext.Request.Headers.GetValues(HeaderName).Select(v => v.ToLower()).ToList();
 
-				returnErrorDetail = (string.IsNullOrWhiteSpace(DebugKey) && values.Contains("true")) 
+				returnErrorDetail = (string.IsNullOrWhiteSpace(DebugKey) && values.Contains("true"))
 					|| (!string.IsNullOrWhiteSpace(DebugKey) && values.Contains(DebugKey.ToLower()));
 			}
 
-			if (returnErrorDetail) 
+			if (returnErrorDetail)
 			{
 				actionExecutedContext.Response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
 				{

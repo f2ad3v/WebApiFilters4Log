@@ -24,5 +24,13 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 		{
 			return Ok();
 		}
+
+		[HttpPost]
+		[Arguments4LogFilter("Args4Log", "*", ArgumentsLogLevel = LogLevel.DEBUG)]
+		[IgnoreLog]
+		public IHttpActionResult LogComplexTypes_IgnoreFilters(Models.ClientModel client)
+		{
+			return Ok();
+		}
 	}
 }

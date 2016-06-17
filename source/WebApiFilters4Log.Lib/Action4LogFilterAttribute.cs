@@ -94,7 +94,7 @@
 		LogLevel _ArgumentsLogLevel = LogLevel.INFO;
 
 		/// <summary>
-		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
+		/// Nome do Logger configurado no log4net que sera utilizado para registrar os argumentos
 		/// </summary>
 		public string ArgumentsLoggerName
 		{
@@ -187,6 +187,9 @@
 		/// <returns>Task</returns>
 		public override Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
 		{
+			if (actionContext.ActionDescriptor.IgnoreFilters())
+				return base.OnActionExecutingAsync(actionContext, cancellationToken);
+
 			var contextId = Guid.NewGuid().ToString();
 
 			if (!actionContext.Request.Headers.Contains(CONTEXT_ID))
@@ -198,10 +201,7 @@
 
 			ILog logger = GetLogger(actionContext.ActionDescriptor);
 
-			if (logger.IsEnabled(ActionLogLevel))
-			{
-				logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
-			}
+			if (logger.IsEnabled(ActionLogLevel)) logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
 
 			ArgumentsLog(actionContext);
 
@@ -216,6 +216,9 @@
 		/// <returns>Task</returns>
 		public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
 		{
+			if (actionExecutedContext.ActionContext.ActionDescriptor.IgnoreFilters())
+				return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+
 			ILog logger = GetLogger(actionExecutedContext.ActionContext.ActionDescriptor);
 
 			ProcessLogActionExecuted(actionExecutedContext, logger, ActionLogLevel);

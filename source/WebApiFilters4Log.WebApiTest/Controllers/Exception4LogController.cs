@@ -45,6 +45,16 @@ namespace WebApiFilters4Log.WebApiTest.Controllers
 			}
 		}
 
+		[HttpGet]
+		[Exception4LogFilter("ExceptionLogger")]
+		[IgnoreLog]
+		public IHttpActionResult LogSimpleException_IgnoreFilters()
+		{
+			ThrowExceptionLevel1();
+			return Ok(Models.ClientModel.GetFakeClient());
+		}
+
+
 		private void ThrowExceptionLevel1()
 		{
 			ThrowExceptionLevel2();

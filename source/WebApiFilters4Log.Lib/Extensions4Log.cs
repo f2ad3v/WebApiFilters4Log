@@ -170,6 +170,17 @@
 			return Newtonsoft.Json.JsonConvert.SerializeObject(dic);
 		}
 
+		/// <summary>
+		/// Extensao para verificar se existe o atributo IgnoreFilters associado a controller ou a action
+		/// </summary>
+		/// <param name="actionDescriptor">HttpActionDescriptor</param>
+		/// <returns></returns>
+		public static bool IgnoreFilters(this HttpActionDescriptor actionDescriptor)
+		{
+			return actionDescriptor.GetCustomAttributes<IgnoreLogAttribute>().Count > 0
+				|| actionDescriptor.ControllerDescriptor.GetCustomAttributes<IgnoreLogAttribute>().Count > 0;
+		}
+
 		#region private methods
 
 		private static string ProcessStackTrace(string stackTrace)

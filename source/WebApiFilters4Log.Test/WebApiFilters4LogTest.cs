@@ -69,6 +69,15 @@ namespace WebApiFilters4Log.Test
 
 				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 
+				response = await client.GetAsync("http://testserver/api/Action4Log/LogInfoWithHttpGet_IgnoreFilters");
+
+				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+				resultClient = await response.Content.ReadAsAsync<WebApiTest.Models.ClientModel>();
+
+				Assert.IsNotNull(resultClient);
+				Assert.IsInstanceOfType(resultClient, typeof(WebApiTest.Models.ClientModel));
+
 				// Testes para Arguments4LogFilter
 				response = await client.GetAsync("http://testserver/api/Arguments4Log/LogPrimitiveTypes?id=6&value=2.34&text=testing");
 
@@ -81,6 +90,10 @@ namespace WebApiFilters4Log.Test
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
 				response = await client.PutAsJsonAsync("http://testserver/api/Arguments4Log/LogInformedComplexTypes?id=8", WebApiTest.Models.ClientModel.GetFakeClient());
+
+				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+				response = await client.PostAsJsonAsync("http://testserver/api/Arguments4Log/LogComplexTypes_IgnoreFilters", WebApiTest.Models.ClientModel.GetFakeClient());
 
 				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
 
@@ -133,6 +146,10 @@ namespace WebApiFilters4Log.Test
 				result = await response.Content.ReadAsStringAsync();
 
 				TestDetailedExceptionInfo(result, "LogDetailedExceptionWithDebugKey", true);
+
+				response = await client.GetAsync("http://testserver/api/Exception4Log/LogSimpleException_IgnoreFilters");
+
+				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 			}
 
 			TestExtension4Log(extension4LogFileName, extension4LogFileNameTmp);
