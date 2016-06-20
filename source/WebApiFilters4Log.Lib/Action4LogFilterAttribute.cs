@@ -166,6 +166,7 @@
 			TimeOutWarn = timeOutWarn;
 
 			ChangeFormatMessage();
+			ChangeArgumentsLogger();
 		}
 
 		/// <summary>

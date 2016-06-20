@@ -46,6 +46,8 @@
 		/// <param name="args">Argumentos opcionais utilizados na formatacao da mensagem</param>
 		public static void LogMessage(this log4net.ILog logger, LogLevel logLevel, string message, params string[] args)
 		{
+			if (logger == null) throw new ArgumentNullException("logger");
+
 			switch (logLevel)
 			{
 				case LogLevel.INFO:
