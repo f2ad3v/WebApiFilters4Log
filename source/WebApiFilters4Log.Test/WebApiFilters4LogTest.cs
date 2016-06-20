@@ -22,6 +22,16 @@ namespace WebApiFilters4Log.Test
 		[TestMethod]
 		public async Task TestFilters()
 		{
+			try
+			{
+				ILog logger = null;
+				logger.LogMessage(LogLevel.DEBUG, "Test");
+			}
+			catch (ArgumentNullException)
+			{
+				Assert.IsTrue(true);
+			}
+
 			var action4LogFileName = string.Format(LOG_FILE_NAME, "Action4Log");
 			var action4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Action4Log");
 			var args4LogFileName = string.Format(LOG_FILE_NAME, "Args4Log");
