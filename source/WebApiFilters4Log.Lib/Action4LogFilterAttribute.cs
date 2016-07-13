@@ -14,13 +14,12 @@
 	public class Action4LogFilterAttribute : ActionFilterAttribute
 	{
 		const string CONTEXT_ID = "ContextId";
+		const string PERSISTED_CONTEXT = "PersistedContext";
 		const string MSG_STARTING_ACTION = "Starting Action";
 		const string MSG_END_ACTION = "End Action";
 		const string MSG_LOG_ARGS = "ARGS";
-
-		ILog Logger = null;
-		ILog ArgLogger = null;
-		LogLevel ActionLogLevel = LogLevel.DEBUG;
+		readonly ILog Logger;
+		readonly LogLevel ActionLogLevel = LogLevel.DEBUG;
 		string FormatLogArguments = string.Empty;
 
 		#region Properties
@@ -28,89 +27,23 @@
 		/// <summary>
 		/// Tempo em segundos. Quando definido e se o tempo para o termino da execucao ultrapassa-lo o LogLevel será alterado para WARN ao registrar o fim da acao. -1 para desabilitar (padrao)
 		/// </summary>
-		public int TimeOutWarn
-		{
-			get
-			{
-				return _TimeOutWarn;
-			}
-			set
-			{
-				_TimeOutWarn = value;
-			}
-		}
-
-		int _TimeOutWarn = -1;
+		public int TimeOutWarn { get; set; } = -1;
 
 		/// <summary>
 		/// Mensagem utilizada no registro de log para o inicio da execucao de uma acao. Valor padrao: Starting Action
 		/// </summary>
-		public string MessageStartingAction
-		{
-			get
-			{
-				return _MessageStartingAction;
-			}
-			set
-			{
-				_MessageStartingAction = value;
-			}
-		}
-
-		string _MessageStartingAction = MSG_STARTING_ACTION;
+		public string MessageStartingAction { get; set; } = MSG_STARTING_ACTION;
 
 		/// <summary>
 		/// Mensagem utilizada no registro de log para o fim da execucao de uma acao. Valor padrao: End Action
 		/// </summary>
-		public string MessageEndAction
-		{
-			get
-			{
-				return _MessageEndAction;
-			}
-			set
-			{
-				_MessageEndAction = value;
-			}
-		}
-
-		string _MessageEndAction = MSG_END_ACTION;
+		public string MessageEndAction { get; set; } = MSG_END_ACTION;
 
 		/// <summary>
 		/// LogLevel utilizado para registrar os argumentos de uma acao. Padrao "INFO"
 		/// </summary>
-		public LogLevel ArgumentsLogLevel
-		{
-			get
-			{
-				return _ArgumentsLogLevel;
-			}
-			set
-			{
-				_ArgumentsLogLevel = value;
-			}
-		}
-
-		LogLevel _ArgumentsLogLevel = LogLevel.INFO;
-
-		/// <summary>
-		/// Nome do Logger configurado no log4net que sera utilizado para registrar os argumentos
-		/// </summary>
-		public string ArgumentsLoggerName
-		{
-			get
-			{
-				return _ArgumentsLoggerName;
-			}
-			set
-			{
-				_ArgumentsLoggerName = value;
-				ChangeArgumentsLogger();
-			}
-		}
-
-		string _ArgumentsLoggerName = string.Empty;
-
+		public LogLevel ArgumentsLogLevel { get; set; } = LogLevel.INFO;
+		
 		/// <summary>
 		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
 		/// </summary>
@@ -132,19 +65,8 @@
 		/// <summary>
 		/// Lista de nome completo dos tipos a serem monitorados separados por ponto e virgula ';'. Use "*" para todos. Ex: "System.Int32;System.String"
 		/// </summary>
-		public string MonitoredTypes
-		{
-			get
-			{
-				return _MonitoredTypes;
-			}
-			set
-			{
-				_MonitoredTypes = value;
-			}
-		}
+		public string MonitoredTypes { get; set; } = string.Empty;
 
-		string _MonitoredTypes = string.Empty;
 
 		#endregion Properties
 
@@ -154,7 +76,7 @@
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="logLevel">LogLevel utilizado para registrar o inicio e em caso de sucesso o fim da execucao de uma acao. Caso termine em excecao sera registrado como ERROR. Padrao=DEBUG</param>
 		/// <param name="timeOutWarn">Tempo em segundos. Quando definido e se o tempo para o termino da execucao ultrapassa-lo o LogLevel será alterado para WARN ao registrar o fim da acao. -1 para desabilitar (padrao)</param>
-		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel, int timeOutWarn = -1)
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel, int timeOutWarn)
 		{
 			if (!string.IsNullOrWhiteSpace(loggerName))
 			{
@@ -166,8 +88,14 @@
 			TimeOutWarn = timeOutWarn;
 
 			ChangeFormatMessage();
-			ChangeArgumentsLogger();
 		}
+
+		/// <summary>
+		/// Construtor para Action4LogFilter
+		/// </summary>
+		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
+		/// <param name="logLevel">LogLevel utilizado para registrar o inicio e em caso de sucesso o fim da execucao de uma acao. Caso termine em excecao sera registrado como ERROR. Padrao=DEBUG</param>
+		public Action4LogFilterAttribute(string loggerName, LogLevel logLevel) : this(loggerName, logLevel, -1) { }
 
 		/// <summary>
 		/// Construtor para Action4LogFilter. Assume LogLevel.DEBUG
@@ -202,7 +130,12 @@
 
 			ILog logger = GetLogger(actionContext.ActionDescriptor);
 
-			if (logger.IsEnabled(ActionLogLevel)) logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
+			if (logger.IsEnabled(ActionLogLevel))
+			{
+				logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
+
+				actionContext.SetContextAsPersisted();
+			}
 
 			ArgumentsLog(actionContext);
 
@@ -222,7 +155,7 @@
 
 			ILog logger = GetLogger(actionExecutedContext.ActionContext.ActionDescriptor);
 
-			ProcessLogActionExecuted(actionExecutedContext, logger, ActionLogLevel);
+			ProcessLogActionExecuted(actionExecutedContext, logger);
 
 			return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
 		}
@@ -233,17 +166,21 @@
 
 			Dictionary<string, string> logArgs = actionContext.ActionArguments.GetActionArguments(monitoredTypes);
 
-			if (logArgs.Count > 0)
+			if (logArgs.Count > 0 && Logger.IsEnabled(ArgumentsLogLevel))
 			{
-				Dictionary<string, string> logContext = actionContext.GetLogContext();
+				bool contextHasPersisted = actionContext.ContextHasPersisted();
 
-				ArgLogger.LogMessage(ArgumentsLogLevel, FormatLogArguments, logContext.ToJson(), logArgs.ToJson());
+				Dictionary<string, string> logContext = actionContext.GetLogContext(contextHasPersisted);
+
+				Logger.LogMessage(ArgumentsLogLevel, FormatLogArguments, logContext.ToJson(), logArgs.ToJson());
 			}
 		}
 
-		private void ProcessLogActionExecuted(HttpActionExecutedContext actionExecutedContext, ILog logger, LogLevel logLevel)
+		private void ProcessLogActionExecuted(HttpActionExecutedContext actionExecutedContext, ILog logger)
 		{
-			var logContext = actionExecutedContext.ActionContext.GetLogContext(true);
+			bool contextHasPersisted = actionExecutedContext.ActionContext.ContextHasPersisted();
+
+			var logContext = actionExecutedContext.ActionContext.GetLogContext(contextHasPersisted);
 
 			bool warn = false;
 
@@ -265,7 +202,16 @@
 				logContext.Add("StatusCode", string.Format("{0}({1})", actionExecutedContext.Response.StatusCode.ToString(), (int)actionExecutedContext.Response.StatusCode));
 			}
 
-			LogLevel level = (actionExecutedContext.Exception == null) ? (warn ? LogLevel.WARN : ActionLogLevel) : LogLevel.ERROR;
+			LogLevel level = warn ? LogLevel.WARN : ActionLogLevel;
+
+			if (actionExecutedContext.Exception != null)
+			{
+				logContext["ErrorMessage"] = actionExecutedContext.Exception.Message;
+
+				logContext["ErrorType"] = actionExecutedContext.Exception.GetType().Name;
+
+				level = LogLevel.ERROR;
+			}
 
 			logger.LogMessage(level, "{0} - {1}", logContext.ToJson(), MessageEndAction);
 		}
@@ -275,11 +221,6 @@
 			if (Logger != null) return Logger;
 
 			return actionDescriptor.GetLogger();
-		}
-
-		private void ChangeArgumentsLogger()
-		{
-			ArgLogger = LogManager.GetLogger(ArgumentsLoggerName);
 		}
 
 		internal void ChangeFormatMessage()

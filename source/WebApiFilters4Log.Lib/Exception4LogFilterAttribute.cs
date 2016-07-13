@@ -18,44 +18,19 @@
 	{
 		const string HEADER_DEBUG = "X-DebugError";
 		const string DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss.fffff";
-
-		ILog Logger = null;
+		readonly ILog Logger = null;
 
 		#region Properties
 
 		/// <summary>
 		/// Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"
 		/// </summary>
-		public string DebugKey
-		{
-			get
-			{
-				return _DebugKey;
-			}
-			set
-			{
-				_DebugKey = value;
-			}
-		}
-
-		string _DebugKey = string.Empty;
+		public string DebugKey { get; set; }
 
 		/// <summary>
 		/// Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado "X-DebugError"
 		/// </summary>
-		public string HeaderName
-		{
-			get
-			{
-				return _HeaderName;
-			}
-			set
-			{
-				_HeaderName = value;
-			}
-		}
-
-		string _HeaderName = HEADER_DEBUG;
+		public string HeaderName { get; set; }
 
 		#endregion Properties
 
@@ -63,9 +38,13 @@
 		/// Construtor do filtro utilizado para logar excecoes e tratar o resultado adequadamente
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
-		public Exception4LogFilterAttribute(string loggerName)
+		/// <param name="debugKey">Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"</param>
+		/// <param name="headerName">Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado o nome "X-DebugError"</param>
+		public Exception4LogFilterAttribute(string loggerName, string debugKey, string headerName)
 		{
 			Logger = LogManager.GetLogger(loggerName);
+			DebugKey = debugKey;
+			HeaderName = headerName;
 		}
 
 		/// <summary>
@@ -73,11 +52,16 @@
 		/// </summary>
 		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
 		/// <param name="debugKey">Define uma chave de confianca para liberar acesso ao resultado com detalhes da excecao. Caso nao informado utilize o valor "true" para o cabecalho "X-DebugError"</param>
-		/// <param name="headerName">Define um nome para o cabecalho responsavel por liberar acesso ao resultado com detalhes da excecao. Caso nao informado sera utilizado o nome "X-DebugError"</param>
-		public Exception4LogFilterAttribute(string loggerName, string debugKey, string headerName = HEADER_DEBUG) : this(loggerName)
+		public Exception4LogFilterAttribute(string loggerName, string debugKey) : this(loggerName, debugKey, HEADER_DEBUG)
 		{
-			DebugKey = debugKey;
-			HeaderName = headerName;
+		}
+
+		/// <summary>
+		/// Construtor do filtro utilizado para logar excecoes e tratar o resultado adequadamente
+		/// </summary>
+		/// <param name="loggerName">Nome do Logger configurado no log4net</param>
+		public Exception4LogFilterAttribute(string loggerName) : this(loggerName, string.Empty)
+		{
 		}
 
 		/// <summary>
@@ -88,8 +72,6 @@
 		/// <returns>Task</returns>
 		public override Task OnExceptionAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
 		{
-			var logContext = actionExecutedContext.ActionContext.GetLogContext();
-
 			Guid errorId = Guid.NewGuid();
 			DateTime dtError = DateTime.Now;
 
@@ -109,10 +91,10 @@
 
 			if (actionExecutedContext.Request.Headers.Contains(HeaderName))
 			{
-				var values = actionExecutedContext.Request.Headers.GetValues(HeaderName).Select(v => v.ToLower()).ToList();
+				var values = actionExecutedContext.Request.Headers.GetValues(HeaderName).Select(v => v.ToLowerInvariant()).ToList();
 
 				returnErrorDetail = (string.IsNullOrWhiteSpace(DebugKey) && values.Contains("true"))
-					|| (!string.IsNullOrWhiteSpace(DebugKey) && values.Contains(DebugKey.ToLower()));
+					|| (!string.IsNullOrWhiteSpace(DebugKey) && values.Contains(DebugKey.ToLowerInvariant()));
 			}
 
 			if (returnErrorDetail)

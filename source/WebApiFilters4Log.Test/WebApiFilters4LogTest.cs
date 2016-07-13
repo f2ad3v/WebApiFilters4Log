@@ -17,6 +17,17 @@ namespace WebApiFilters4Log.Test
 		private const string LOG_FILE_NAME_TMP = ".\\log\\{0}Tmp.log";
 		private static string jsonModelClient = Newtonsoft.Json.JsonConvert.SerializeObject(WebApiTest.Models.ClientModel.GetFakeClient());
 
+		readonly string action4LogFileName = string.Format(LOG_FILE_NAME, "Action4Log");
+		readonly string action4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Action4Log");
+		readonly string args4LogFileName = string.Format(LOG_FILE_NAME, "Args4Log");
+		readonly string args4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Args4Log");
+		readonly string exception4LogFileName = string.Format(LOG_FILE_NAME, "Exceptions4Log");
+		readonly string exception4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Exceptions4Log");
+		readonly string extension4LogFileName = string.Format(LOG_FILE_NAME, "Extension4Log");
+		readonly string extension4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Extension4Log");
+		readonly string log4NetToolsFileName = string.Format(LOG_FILE_NAME, "Log4NetTools");
+		readonly string log4NetToolsFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Log4NetTools");
+
 		#region TestFilters
 
 		[TestMethod]
@@ -32,23 +43,7 @@ namespace WebApiFilters4Log.Test
 				Assert.IsTrue(true);
 			}
 
-			var action4LogFileName = string.Format(LOG_FILE_NAME, "Action4Log");
-			var action4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Action4Log");
-			var args4LogFileName = string.Format(LOG_FILE_NAME, "Args4Log");
-			var args4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Args4Log");
-			var exception4LogFileName = string.Format(LOG_FILE_NAME, "Exceptions4Log");
-			var exception4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Exceptions4Log");
-			var extension4LogFileName = string.Format(LOG_FILE_NAME, "Extension4Log");
-			var extension4LogFileNameTmp = string.Format(LOG_FILE_NAME_TMP, "Extension4Log");
-
-			if (File.Exists(action4LogFileName)) File.Delete(action4LogFileName);
-			if (File.Exists(action4LogFileNameTmp)) File.Delete(action4LogFileNameTmp);
-			if (File.Exists(args4LogFileName)) File.Delete(args4LogFileName);
-			if (File.Exists(args4LogFileNameTmp)) File.Delete(args4LogFileNameTmp);
-			if (File.Exists(exception4LogFileName)) File.Delete(exception4LogFileName);
-			if (File.Exists(exception4LogFileNameTmp)) File.Delete(exception4LogFileNameTmp);
-			if (File.Exists(extension4LogFileName)) File.Delete(extension4LogFileName);
-			if (File.Exists(extension4LogFileNameTmp)) File.Delete(extension4LogFileNameTmp);
+			DeleteLogFiles();
 
 			using (var server = TestServer.Create<OwinTestConf>())
 			using (var client = new HttpClient(server.Handler))
@@ -160,15 +155,39 @@ namespace WebApiFilters4Log.Test
 				response = await client.GetAsync("http://testserver/api/Exception4Log/LogSimpleException_IgnoreFilters");
 
 				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
+
+				response = await client.GetAsync("http://testserver/api/Log4NetTools/GetLogLevel_OFF_Success");
+
+				Assert.AreEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+				response = await client.GetAsync("http://testserver/api/Log4NetTools/GetLogLevel_Fail");
+
+				Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
 			}
 
 			TestExtension4Log(extension4LogFileName, extension4LogFileNameTmp);
 
-			TestAction4Log(action4LogFileName, action4LogFileNameTmp);
+			TestAction4Log();
 
-			TestArguments4Log(args4LogFileName, args4LogFileNameTmp);
+			TestArguments4Log();
 
-			TestException4Log(exception4LogFileName, exception4LogFileNameTmp);
+			TestException4Log();
+
+			TestLog4NetTools();
+		}
+
+		private void DeleteLogFiles()
+		{
+			if (File.Exists(action4LogFileName)) File.Delete(action4LogFileName);
+			if (File.Exists(action4LogFileNameTmp)) File.Delete(action4LogFileNameTmp);
+			if (File.Exists(args4LogFileName)) File.Delete(args4LogFileName);
+			if (File.Exists(args4LogFileNameTmp)) File.Delete(args4LogFileNameTmp);
+			if (File.Exists(exception4LogFileName)) File.Delete(exception4LogFileName);
+			if (File.Exists(exception4LogFileNameTmp)) File.Delete(exception4LogFileNameTmp);
+			if (File.Exists(extension4LogFileName)) File.Delete(extension4LogFileName);
+			if (File.Exists(extension4LogFileNameTmp)) File.Delete(extension4LogFileNameTmp);
+			if (File.Exists(log4NetToolsFileName)) File.Delete(log4NetToolsFileName);
+			if (File.Exists(log4NetToolsFileNameTmp)) File.Delete(log4NetToolsFileNameTmp);
 		}
 
 		#endregion TestFilters
@@ -294,7 +313,7 @@ namespace WebApiFilters4Log.Test
 
 		#region TestAction4Log
 
-		private void TestAction4Log(string action4LogFileName, string action4LogFileNameTmp)
+		private void TestAction4Log()
 		{
 			Assert.IsTrue(File.Exists(action4LogFileName));
 
@@ -302,20 +321,20 @@ namespace WebApiFilters4Log.Test
 
 			var lines = File.ReadAllLines(action4LogFileNameTmp);
 
-			Assert.AreEqual(8, lines.Length);
+			Assert.AreEqual(9, lines.Length);
 
 			TestActionLogHttpGetSuccess(lines[0], lines[1]);
 			TestActionLogHttpGetFail(lines[2], lines[3]);
 			TestActionLogHttpGetWarnTimeout(lines[4], lines[5]);
 
-			var logArgs = new LogArgsInfo(lines[6], "argumentos");
+			var logArgs = new LogArgsInfo(lines[7], "argumentos");
 
 			Assert.IsTrue(logArgs.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logArgs.DateTimeLog.Value.ToString("yyyyMMddHH"));
 
 			Assert.AreEqual(1, logArgs.Arguments.Count);
 
-			var logEndErro = new LogInfo(lines[7]);
+			var logEndErro = new LogInfo(lines[8]);
 
 			Assert.IsTrue(logEndErro.DateTimeLog.HasValue);
 			Assert.AreEqual(DateTime.Now.ToString("yyyyMMddHH"), logEndErro.DateTimeLog.Value.ToString("yyyyMMddHH"));
@@ -455,7 +474,7 @@ namespace WebApiFilters4Log.Test
 
 		#region TestArguments4Log
 
-		private void TestArguments4Log(string args4LogFileName, string args4LogFileNameTmp)
+		private void TestArguments4Log()
 		{
 			Assert.IsTrue(File.Exists(args4LogFileName));
 
@@ -561,7 +580,7 @@ namespace WebApiFilters4Log.Test
 
 		#region TestException4Log
 
-		private void TestException4Log(string exception4LogFileName, string exception4LogFileNameTmp)
+		private void TestException4Log()
 		{
 			Assert.IsTrue(File.Exists(exception4LogFileName));
 
@@ -576,6 +595,7 @@ namespace WebApiFilters4Log.Test
 			TestDetailedExceptionInfo(lines[2], "LogDetailedException", false);
 			TestDetailedExceptionInfo(lines[3], "LogDetailedExceptionWithDebugKey", true);
 		}
+
 		private static void TestSimpleExceptionInfo(string exceptionResult)
 		{
 			var exInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<ExceptionInfo>(exceptionResult);
@@ -626,5 +646,16 @@ namespace WebApiFilters4Log.Test
 		}
 
 		#endregion TestException4Log
+
+		private void TestLog4NetTools()
+		{
+			Assert.IsTrue(File.Exists(log4NetToolsFileName));
+
+			File.Copy(log4NetToolsFileName, log4NetToolsFileNameTmp);
+
+			var lines = File.ReadAllLines(log4NetToolsFileNameTmp);
+
+			Assert.AreEqual(8, lines.Length);
+		}
 	}
 }

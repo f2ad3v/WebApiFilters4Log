@@ -1,4 +1,5 @@
-﻿namespace WebApiFilters4Log
+﻿
+namespace WebApiFilters4Log
 {
 	using System;
 	using System.Collections.Generic;
@@ -8,7 +9,7 @@
 	/// <summary>
 	/// Extensoes para log4net
 	/// </summary>
-	public static class log4netExtensions
+	public static class Log4NetExtensions
 	{
 		/// <summary>
 		/// Extensao para identificar o LogLevel ativo
@@ -35,6 +36,60 @@
 				default:
 					return logger.IsDebugEnabled;
 			}
+		}
+
+		/// <summary>
+		/// Extensao para obter o LogLevel ativo no Logger
+		/// </summary>
+		/// <param name="logger">log4net.ILog</param>
+		public static LogLevel GetLogLevel(this log4net.ILog logger)
+		{
+			if (logger == null) throw new ArgumentNullException("logger");
+
+			if (logger.IsDebugEnabled) return LogLevel.DEBUG;
+
+			if (logger.IsInfoEnabled) return LogLevel.INFO;
+
+			if (logger.IsWarnEnabled) return LogLevel.WARN;
+
+			if (logger.IsErrorEnabled) return LogLevel.ERROR;
+
+			if (logger.IsFatalEnabled) return LogLevel.FATAL;
+
+			return LogLevel.OFF;
+		}
+
+		/// <summary>
+		/// Extensao para alterar o LogLevel do Logger
+		/// </summary>
+		/// <param name="logger">log4net.ILog</param>
+		/// <param name="logLevel">LogLevel</param>
+		public static void SetLogLevel(this log4net.ILog logger, LogLevel logLevel)
+		{
+			if (logger == null) throw new ArgumentNullException("logger");
+
+			log4net.Core.Level level = log4net.Core.Level.Off;
+
+			switch (logLevel)
+			{
+				case LogLevel.INFO:
+					level = log4net.Core.Level.Info;
+					break;
+				case LogLevel.DEBUG:
+					level = log4net.Core.Level.Debug;
+					break;
+				case LogLevel.WARN:
+					level = log4net.Core.Level.Warn;
+					break;
+				case LogLevel.ERROR:
+					level = log4net.Core.Level.Error;
+					break;
+				case LogLevel.FATAL:
+					level = log4net.Core.Level.Fatal;
+					break;
+			}
+
+			((log4net.Repository.Hierarchy.Logger)logger.Logger).Level = level;
 		}
 
 		/// <summary>
@@ -87,9 +142,13 @@
 		/// <param name="args">Argumentos opcionais utilizados na formatacao da mensagem</param>
 		public static void LogMessage(this log4net.ILog logger, LogLevel logLevel, HttpActionContext actionContext, string message, params string[] args)
 		{
-			var context = actionContext.GetLogContext();
+			bool contextHasPersisted = actionContext.ContextHasPersisted();
+
+			var context = actionContext.GetLogContext(contextHasPersisted);
 
 			logger.LogMessage(logLevel, context, message, args);
+
+			if (!contextHasPersisted) actionContext.SetContextAsPersisted();
 		}
 
 		/// <summary>
@@ -104,7 +163,7 @@
 		{
 			var msg = message;
 
-			if (args != null && args.Count() > 0) msg = string.Format(message, args);
+			if (args != null && args.Any()) msg = string.Format(message, args);
 
 			if (context != null && context.Count > 0) msg = string.Format("{0} - {1}", context.ToJson(), msg);
 

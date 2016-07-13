@@ -11,6 +11,17 @@
 	public static class Extensions4Log
 	{
 		const string CONTEXT_ID = "ContextId";
+		const string PERSISTED_CONTEXT = "PersistedContext";
+
+		/// <summary>
+		/// Extensao para extrair do HttpActionContext um dicionario com os detalhes da acao
+		/// </summary>
+		/// <param name="actionContext">HttpActionDescriptor</param>
+		/// <returns>dicionario com os detalhes da acao</returns>
+		public static Dictionary<string, string> GetLogContext(this HttpActionContext actionContext)
+		{
+			return actionContext.GetLogContext(false);
+		}
 
 		/// <summary>
 		/// Extensao para extrair do HttpActionContext um dicionario com os detalhes da acao
@@ -18,13 +29,14 @@
 		/// <param name="actionContext">HttpActionDescriptor</param>
 		/// <param name="onlyContextId">true para retornar somente o id do contexto e false para retornar tudo</param>
 		/// <returns>dicionario com os detalhes da acao</returns>
-		public static Dictionary<string, string> GetLogContext(this HttpActionContext actionContext, bool onlyContextId = false)
+		public static Dictionary<string, string> GetLogContext(this HttpActionContext actionContext, bool onlyContextId)
 		{
 			var contextId = string.Empty;
 
 			if (actionContext.Request.Headers.Contains(CONTEXT_ID))
 				contextId = actionContext.Request.Headers.GetValues(CONTEXT_ID).SingleOrDefault();
 
+			//if (actionContext.ContextHasPersisted()) 
 			if (onlyContextId) return new Dictionary<string, string> { { CONTEXT_ID, contextId } };
 
 			string controllerName = actionContext.ActionDescriptor.ControllerDescriptor.ControllerName;
@@ -53,6 +65,27 @@
 			context.Add("UserName", userName);
 
 			return context;
+		}
+
+		/// <summary>
+		/// Verifica se o contexto ja foi persistido
+		/// </summary>
+		/// <param name="actionContext">HttpActionDescriptor</param>
+		/// <returns>true=persistido; false=nao persistido</returns>
+		internal static bool ContextHasPersisted(this HttpActionContext actionContext)
+		{
+			return actionContext.Request.Headers.Contains(PERSISTED_CONTEXT)
+				&& actionContext.Request.Headers.GetValues(PERSISTED_CONTEXT).SingleOrDefault() == "true";
+		}
+
+		/// <summary>
+		/// Define o contexto como persistido
+		/// </summary>
+		/// <param name="actionContext">HttpActionDescriptor</param>
+		internal static void SetContextAsPersisted(this HttpActionContext actionContext)
+		{
+			if (!actionContext.Request.Headers.Contains(PERSISTED_CONTEXT))
+				actionContext.Request.Headers.Add(PERSISTED_CONTEXT, "true");
 		}
 
 		/// <summary>
@@ -189,9 +222,9 @@
 
 			if (!stackTrace.Contains("lambda_method(Closure")) return stackTrace;
 
-			var firstPart = stackTrace.Substring(0, stackTrace.IndexOf("lambda_method(Closure"));
+			var firstPart = stackTrace.Substring(0, stackTrace.IndexOf("lambda_method(closure", StringComparison.InvariantCultureIgnoreCase));
 
-			return firstPart.Substring(0, firstPart.LastIndexOf("\r\n"));
+			return firstPart.Substring(0, firstPart.LastIndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase));
 		}
 
 		private static string GetValue(KeyValuePair<string, object> kvp)
