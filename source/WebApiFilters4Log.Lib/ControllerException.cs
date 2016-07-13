@@ -57,7 +57,9 @@
 		public ControllerException(HttpActionContext actionContext, Exception innerException)
 			: base(GetMessageError(actionContext.ActionDescriptor), Guid.NewGuid(), innerException)
 		{
-			Guid contextId = ContextId = Guid.Empty;
+			ContextId = Guid.Empty;
+
+			Guid contextId = ContextId;
 
 			var contextIdStr = string.Empty;
 			if (actionContext.Request.Headers.Contains(CONTEXT_ID))

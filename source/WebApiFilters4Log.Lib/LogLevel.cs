@@ -24,6 +24,10 @@
 		/// <summary>
 		/// FATAL
 		/// </summary>
-		FATAL
+		FATAL,
+		/// <summary>
+		/// OFF
+		/// </summary>
+		OFF
 	}
 }

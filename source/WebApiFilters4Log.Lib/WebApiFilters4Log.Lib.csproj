@@ -76,7 +76,8 @@
     <Compile Include="Extensions4Log.cs" />
     <Compile Include="IgnoreLogAttribute.cs" />
     <Compile Include="JsonContent.cs" />
-    <Compile Include="log4netExtensions.cs" />
+    <Compile Include="Log4NetExtensions.cs" />
+    <Compile Include="Log4NetTools.cs" />
     <Compile Include="LogLevel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -15,27 +15,15 @@
 		const string MSG_LOG_ARGS = "ARGS";
 
 		string FormatLogArguments = string.Empty;
-		internal string[] _MonitoredTypes = null;
-		ILog Logger = null;
+		internal string[] _MonitoredTypes;
+		readonly ILog Logger;
 
 		#region Properties
 
 		/// <summary>
 		/// LogLevel utilizado para registrar os argumentos de uma acao. Padrao "INFO"
 		/// </summary>
-		public LogLevel ArgumentsLogLevel
-		{
-			get
-			{
-				return _ArgumentsLogLevel;
-			}
-			set
-			{
-				_ArgumentsLogLevel = value;
-			}
-		}
-
-		LogLevel _ArgumentsLogLevel = LogLevel.INFO;
+		public LogLevel ArgumentsLogLevel { get; set; } = LogLevel.INFO;
 
 		/// <summary>
 		/// Mensagem de separacao do contexto e os argumentos. Padrao "ARGS" - Ex: {CONTEXTO} ARGS {ARGUMENTOS}
@@ -69,7 +57,7 @@
 			if (typesMonitored != null && typesMonitored.Length > 0)
 				_MonitoredTypes = typesMonitored;
 			else
-				_MonitoredTypes = new string[] { "*" };
+				_MonitoredTypes = new[] { "*" };
 
 			ChangeFormatMessage();
 		}
@@ -87,7 +75,7 @@
 
 			Dictionary<string, string> logArgs = actionContext.ActionArguments.GetActionArguments(_MonitoredTypes);
 
-			if (logArgs.Count > 0)
+			if (logArgs.Count > 0 && Logger.IsEnabled(ArgumentsLogLevel))
 			{
 				Dictionary<string, string> logContext = actionContext.GetLogContext();
 

@@ -18,7 +18,7 @@
 		/// </summary>
 		/// <param name="value">Instancia de um objeto</param>
 		/// <param name="formatting">Formato do json</param>
-		public JsonContent(object value, Formatting formatting = Formatting.Indented)
+		public JsonContent(object value, Formatting formatting)
 		{
 			var jw = new JsonTextWriter(new StreamWriter(_stream)) { Formatting = formatting };
 
@@ -30,6 +30,12 @@
 
 			_stream.Position = 0;
 		}
+
+		/// <summary>
+		/// Construtor que recebe um objeto que sera retornado como json
+		/// </summary>
+		/// <param name="value">Instancia de um objeto</param>
+		public JsonContent(object value) : this(value, Formatting.Indented) { }
 
 		/// <summary>
 		/// SerializeToStreamAsync
