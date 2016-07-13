@@ -148,7 +148,7 @@ namespace WebApiFilters4Log
 
 			logger.LogMessage(logLevel, context, message, args);
 
-			if (!contextHasPersisted) actionContext.SetContextAsPersisted();
+			if (!contextHasPersisted && logLevel >= logger.GetLogLevel()) actionContext.SetContextAsPersisted();
 		}
 
 		/// <summary>

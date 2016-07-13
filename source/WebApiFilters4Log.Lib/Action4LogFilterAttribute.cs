@@ -14,7 +14,6 @@
 	public class Action4LogFilterAttribute : ActionFilterAttribute
 	{
 		const string CONTEXT_ID = "ContextId";
-		const string PERSISTED_CONTEXT = "PersistedContext";
 		const string MSG_STARTING_ACTION = "Starting Action";
 		const string MSG_END_ACTION = "End Action";
 		const string MSG_LOG_ARGS = "ARGS";
@@ -134,7 +133,7 @@
 			{
 				logger.LogMessage(ActionLogLevel, actionContext, MessageStartingAction);
 
-				actionContext.SetContextAsPersisted();
+				if (ActionLogLevel >= logger.GetLogLevel()) actionContext.SetContextAsPersisted();
 			}
 
 			ArgumentsLog(actionContext);
